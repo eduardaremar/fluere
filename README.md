@@ -89,7 +89,7 @@ O painel **Hoje** avisa quando o último backup passou de 7 dias.
 | 6 | Metas do semestre | ✅ pronto para validar |
 | 7 | Conteúdo | ✅ pronto para validar |
 | 8 | Trabalhos paralelos | ✅ pronto para validar |
-| 9 | Estudos | |
+| 9 | Estudos | ✅ pronto para validar |
 | 10 | Vencimentos | ✅ pronto para validar |
 | 11 | Revisão semanal | ✅ pronto para validar |
 | 12 | Painel Hoje completo | |
@@ -251,3 +251,15 @@ Cinco passos, uns 10 minutos, de preferência no domingo. O Fluere junta os núm
 - O que você escreve fica na memória enquanto navega e só vai para o cofre ao tocar em **Concluir revisão**. Se bloquear o app no meio, escreva de novo.
 - As setas trocam de semana, e o histórico guarda as revisões anteriores.
 - **Aviso no Hoje:** no domingo, se a revisão ainda não foi feita (e na segunda, se a da semana passada ficou de fora).
+
+## Estudos (Mais → Estudos)
+
+Quadro com três colunas: **Quero estudar → Estudando → Concluído**. Sem meta de estudo: serve para não perder nada.
+
+- **Tipos:** cursos, artigos científicos, livros e temas para pesquisar. Os filtros no topo mostram um tipo de cada vez.
+- **Cada item** tem título, autor ou instituição, link, em que ponto está e uma **anotação** livre (links, trechos colados, o que aprendeu).
+- **Progresso:** cursos (aulas feitas de X) e livros (páginas lidas de X) mostram uma barra. No curso em andamento, o botão **+1 aula** soma uma aula; ao chegar no total, o curso vai para "Concluído".
+- **Data limite** (só para cursos): quando faltam 14 dias ou menos, ou se passou, o Hoje avisa.
+- **Vira conteúdo:** manda o estudo para a caixinha de ideias do Conteúdo, já com o link da fonte, e você escolhe o pilar.
+- **Curso pago:** informe o valor no curso e use "Lançar gasto no CNPJ": o gasto abre já preenchido com a categoria Educação.
+- "+ Novo → Estudo" também cadastra de qualquer tela.

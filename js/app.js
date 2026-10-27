@@ -34,6 +34,7 @@ import * as Pe from './modulos/pecas.js';
 import './modulos/metas.js';
 import * as V from './modulos/vencimentos.js';
 import './modulos/revisao.js';
+import * as Es from './modulos/estudos.js';
 
 /* ---------- telas da barra de baixo (celular) ---------- */
 const TELAS = [
@@ -75,6 +76,7 @@ const NOVOS = [
   { nome: 'Paciente', desc: 'Nova ficha de cadastro', icone: icone.pacientes, abrir: () => P.abrirPaciente() },
   { nome: 'Ideia de conteúdo', desc: 'Captura rápida para a caixinha', icone: icone.ideia, abrir: () => Pe.abrirIdeia() },
   { nome: 'Vencimento', desc: 'Documento, IPVA, anuidade, contrato', icone: icone.vencimentos, abrir: () => V.abrirVencimento() },
+  { nome: 'Estudo', desc: 'Curso, artigo, livro ou tema', icone: icone.estudos, abrir: () => Es.abrirEstudo() },
   { nome: 'Gasto', desc: 'CPF ou CNPJ, à vista ou parcelado', icone: icone.gasto, abrir: () => S.abrirGasto() },
   { nome: 'Tarefa', desc: 'Com área, dia, prazo e tempo', icone: icone.tarefa, abrir: () => T.abrirTarefa() },
   { nome: 'Hábito', desc: 'Todo dia ou algumas vezes por semana', icone: icone.revisao, abrir: () => H.abrirHabito() },

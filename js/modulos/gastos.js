@@ -140,13 +140,13 @@ const opcoesCat = (lista, atual) => lista.map((c) => `<option ${c === atual ? 's
    ========================================================= */
 
 /**
- * Novo gasto ou edição. `mes` = mês da fatura sugerido.
+ * Novo gasto ou edição. `mes` = mês da fatura sugerido. `prefill` = campos já preenchidos (ex.: { desc, valor, conta, cat }).
  * Em gastos novos dá para parcelar: lança uma vez e o sistema cria as parcelas nas próximas faturas.
  */
-export function abrirGasto(gasto = null, { mes } = {}) {
+export function abrirGasto(gasto = null, { mes, prefill = {} } = {}) {
   const novo = !gasto;
   const cfg = config();
-  const g = gasto ? { ...gasto } : { desc: '', valor: '', conta: 'CPF', cat: 'Mercado', data: isoDia(), mes: mes || isoMes(), meio: cfg.cartoes[0].id, revisar: false };
+  const g = gasto ? { ...gasto } : { desc: '', valor: '', conta: 'CPF', cat: 'Mercado', data: isoDia(), mes: mes || isoMes(), meio: cfg.cartoes[0].id, revisar: false, ...prefill };
   const parcelado = !novo && g.grupo;
 
   const f = abrirFolha(`
