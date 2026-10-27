@@ -32,6 +32,8 @@ import * as P from './modulos/pacientes.js';
 import './modulos/trabalhos.js';
 import * as Pe from './modulos/pecas.js';
 import './modulos/metas.js';
+import * as V from './modulos/vencimentos.js';
+import './modulos/revisao.js';
 
 /* ---------- telas da barra de baixo (celular) ---------- */
 const TELAS = [
@@ -72,6 +74,7 @@ const NOVOS = [
   { nome: 'Consulta feita', desc: 'Atualiza o pacote do paciente', icone: icone.consulta, abrir: () => P.abrirConsultaFeita() },
   { nome: 'Paciente', desc: 'Nova ficha de cadastro', icone: icone.pacientes, abrir: () => P.abrirPaciente() },
   { nome: 'Ideia de conteúdo', desc: 'Captura rápida para a caixinha', icone: icone.ideia, abrir: () => Pe.abrirIdeia() },
+  { nome: 'Vencimento', desc: 'Documento, IPVA, anuidade, contrato', icone: icone.vencimentos, abrir: () => V.abrirVencimento() },
   { nome: 'Gasto', desc: 'CPF ou CNPJ, à vista ou parcelado', icone: icone.gasto, abrir: () => S.abrirGasto() },
   { nome: 'Tarefa', desc: 'Com área, dia, prazo e tempo', icone: icone.tarefa, abrir: () => T.abrirTarefa() },
   { nome: 'Hábito', desc: 'Todo dia ou algumas vezes por semana', icone: icone.revisao, abrir: () => H.abrirHabito() },

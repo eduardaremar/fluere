@@ -90,8 +90,8 @@ O painel **Hoje** avisa quando o último backup passou de 7 dias.
 | 7 | Conteúdo | ✅ pronto para validar |
 | 8 | Trabalhos paralelos | ✅ pronto para validar |
 | 9 | Estudos | |
-| 10 | Vencimentos e documentos | |
-| 11 | Revisão semanal | |
+| 10 | Vencimentos | ✅ pronto para validar |
+| 11 | Revisão semanal | ✅ pronto para validar |
 | 12 | Painel Hoje completo | |
 
 ---
@@ -229,3 +229,25 @@ O Fluere **não gera ideias**: serve para **executar e medir**. O planejamento e
 - **Progresso:** cada pilar mostra a média das suas metas, e o **progresso geral** é a média dos pilares que têm metas. A teia (radar) mostra o equilíbrio entre os pilares.
 - **Aviso no Hoje:** quando uma meta está bem atrás do ritmo (por exemplo, 10% feito com 65% do semestre passado), o Fluere avisa. No máximo 3 avisos por vez.
 - Os alvos são seus e ficam só no cofre.
+
+## Vencimentos e documentos (Mais → Vencimentos)
+
+- **O que cadastrar:** tudo que tem data para renovar ou pagar: anuidade do CRN, certificado digital, CNH, IPVA, licenciamento, seguros, contratos. A lista começa vazia; os **atalhos** ("Anuidade do CRN", "IPVA"…) só preenchem o formulário, e você escolhe a data.
+- **Cada item** tem categoria (Profissional, Veículo, Seguros e contratos, Pessoal), data, se **se repete** (todo mês, 3 meses, 6 meses, todo ano ou não), quantos dias antes avisar (padrão: 30), valor e link opcionais.
+- **Renovei:** o botão passa a data sozinho para o próximo vencimento (IPVA anual vira o ano seguinte). Se o item não se repete (como a CNH), abre o formulário para você digitar a data nova.
+- **Linha do tempo:** vencidos, próximos 30 dias, 30 a 90 dias e mais adiante. Os **documentos das pousadas** (cadastrados em Trabalhos → RT) aparecem aqui também.
+- **Avisos no Hoje:** quando entra na janela de aviso e quando vence (mais urgente nos últimos 7 dias).
+
+## Revisão semanal (Mais → Revisão semanal)
+
+Cinco passos, uns 10 minutos, de preferência no domingo. O Fluere junta os números sozinho; você escreve só o essencial.
+
+1. **Como foi a semana:** tarefas feitas, consultas, peças postadas, visitas RT. Você escreve o que deu certo e o que não saiu como esperado.
+2. **Dinheiro:** vendas e gastos da semana, o que falta receber dos pacientes e a sobra do mês até agora.
+3. **Hábitos e metas:** os hábitos da semana em bolinhas, a meta de conteúdo e as metas do semestre que estão atrás do ritmo.
+4. **Pendências:** tarefas atrasadas (um toque move para a próxima semana), tarefas sem dia e todos os avisos dos módulos.
+5. **Próxima semana:** consultas marcadas, se a semana fecha nas horas livres, conteúdo programado, prazos e vencimentos. Você escreve as 3 prioridades e pode copiar a semana para o Claude.
+
+- O que você escreve fica na memória enquanto navega e só vai para o cofre ao tocar em **Concluir revisão**. Se bloquear o app no meio, escreva de novo.
+- As setas trocam de semana, e o histórico guarda as revisões anteriores.
+- **Aviso no Hoje:** no domingo, se a revisão ainda não foi feita (e na segunda, se a da semana passada ficou de fora).
