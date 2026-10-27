@@ -31,6 +31,7 @@ import * as S from './modulos/gastos.js';
 import * as P from './modulos/pacientes.js';
 import './modulos/trabalhos.js';
 import * as Pe from './modulos/pecas.js';
+import './modulos/metas.js';
 
 /* ---------- telas da barra de baixo (celular) ---------- */
 const TELAS = [

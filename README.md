@@ -86,7 +86,7 @@ O painel **Hoje** avisa quando o último backup passou de 7 dias.
 | 3 | Pacientes | ✅ pronto para validar |
 | 4 | Tarefas e planejador da semana | ✅ aprovada |
 | 5 | Hábitos | ✅ aprovada |
-| 6 | Metas do semestre | |
+| 6 | Metas do semestre | ✅ pronto para validar |
 | 7 | Conteúdo | ✅ pronto para validar |
 | 8 | Trabalhos paralelos | ✅ pronto para validar |
 | 9 | Estudos | |
@@ -219,3 +219,13 @@ O Fluere **não gera ideias**: serve para **executar e medir**. O planejamento e
 - **Ideias:** caixinha de captura rápida (também em "+ Novo → Ideia de conteúdo"). "Virar peça" abre a peça já com o tema, o pilar e o link, e a ideia sai da caixinha.
 - **Métricas:** cerca de 7 dias depois de postar, o Fluere pede alcance, curtidas, comentários, salvamentos, compartilhamentos e seguidores ganhos (stories ficam de fora). A aba mostra os totais dos últimos 30 dias, o alcance médio por formato e o ranking "o que mais funcionou".
 - **Avisos no Hoje:** peça programada para hoje ou atrasada, métricas pendentes e, a partir da sexta, o que ainda falta da meta da semana. O painel Hoje mostra a "peça do dia", com botão para avançar.
+
+## Metas do semestre (Rotina → Metas)
+
+- **Seis pilares:** Carreira, Finanças, Saúde, Relações, Lazer e Desenvolvimento, cada um com a sua cor. O semestre é de janeiro a junho (1º) ou de julho a dezembro (2º); as setas trocam de semestre.
+- **Criar uma meta:** "+ Meta" (ou o botão do próprio pilar). Escolha o pilar, escreva a meta, informe o **alvo** e como acompanhar.
+- **Eu atualizo:** você digita o alvo e o quanto já fez (com unidade, como kg ou livros) e toca em "atualizar" quando quiser.
+- **Automática:** o Fluere calcula sozinho somando o semestre inteiro. As fontes são: faturamento do consultório (bruto), quanto sobrou (entrou − saiu), vezes que você fez um hábito, posts no feed (Reels e carrossel), seguidores ganhos (das métricas) e atendimentos vendidos.
+- **Progresso:** cada pilar mostra a média das suas metas, e o **progresso geral** é a média dos pilares que têm metas. A teia (radar) mostra o equilíbrio entre os pilares.
+- **Aviso no Hoje:** quando uma meta está bem atrás do ritmo (por exemplo, 10% feito com 65% do semestre passado), o Fluere avisa. No máximo 3 avisos por vez.
+- Os alvos são seus e ficam só no cofre.

@@ -499,3 +499,14 @@ h1.serif{font:400 clamp(22px,3.8vw,28px)/1.15 var(--serif);letter-spacing:0}
 .peca-card .avanca{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--soft);border:1px solid var(--line)}
 .peca-card .avanca:hover{color:var(--acc);border-color:var(--acc)}
 .peca-card .caixa-chk{width:20px;height:20px;border-radius:50%}
+
+/* =========================================================
+   METAS DO SEMESTRE
+   ========================================================= */
+.pilar-linha{display:grid;grid-template-columns:150px 1fr 40px;gap:12px;align-items:center;font-size:14px;padding:6px 0}
+.meta-linha{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-top:1px solid var(--line)}
+.meta-topo{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.meta-topo .tx{flex:1;min-width:0;text-align:left}
+.meta-topo .tx b{font-weight:500;font-size:14px}
+.meta-linha small{color:var(--soft);font-size:12px}
+@media (max-width:520px){.pilar-linha{grid-template-columns:120px 1fr 36px;font-size:13px}}
