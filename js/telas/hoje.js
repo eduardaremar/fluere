@@ -10,6 +10,7 @@ import { cabecalho, painel, kpi, icone } from '../nucleo/ui.js';
 import { diaPorExtenso, saudacao, esc, isoDia, isoMes, duracao, diaMes } from '../nucleo/util.js';
 import * as T from '../modulos/tarefas.js';
 import * as H from '../modulos/habitos.js';
+import * as P from '../modulos/pacientes.js';
 
 const NOME = 'Eduarda';
 
@@ -22,6 +23,7 @@ export function desenhar(el) {
   const atrasadas = T.atrasadas(hoje).filter((t) => t.dia !== hoje);
   const feitas = doDia.filter((t) => t.status === 'feita').length;
   const restante = doDia.filter((t) => t.status === 'aberta').reduce((s, t) => s + (Number(t.tempo) || 0), 0);
+  const consultas = P.doDia(hoje);
   const est = H.estatisticas(isoMes());
   const habitos = est.porHabito;
 
@@ -57,7 +59,7 @@ export function desenhar(el) {
       ${kpi({ rot: 'Tarefas de hoje', valor: `${feitas}<span style="font-size:.5em;color:var(--soft)"> / ${nT}</span>`, sub: restante ? `${duracao(restante)} ainda previstas` : (nT ? 'tudo feito ✦' : 'nada planejado'), extra: nT ? `<div class="trilho"><i style="width:${(feitas / nT) * 100}%;background:var(--g4)"></i></div>` : '', classe: 'quente' })}
       ${kpi({ rot: 'Hábitos de hoje', valor: `${est.hojeFeitos}<span style="font-size:.5em;color:var(--soft)"> / ${habitos.length}</span>`, sub: est.hojeFeitos === habitos.length && habitos.length ? 'todos marcados ✦' : 'toque para marcar abaixo', classe: 'rosa' })}
       ${kpi({ rot: 'Atrasadas', valor: atrasadas.length, unidade: atrasadas.length === 1 ? 'tarefa' : 'tarefas', sub: atrasadas.length ? 'reorganize na semana' : 'nenhuma ✦' })}
-      ${kpi({ rot: 'Pacientes hoje', valor: 0, unidade: 'consultas', sub: 'chega no módulo de pacientes', classe: 'verde' })}
+      ${kpi({ rot: 'Pacientes hoje', valor: consultas.length, unidade: consultas.length === 1 ? 'consulta' : 'consultas', sub: consultas.length ? `primeira ${consultas[0].proximaHora ? 'às ' + consultas[0].proximaHora.replace(':', 'h').replace(/h00$/, 'h') : 'do dia'}` : 'nenhuma marcada', classe: 'verde' })}
     </div>
 
     <div class="grade g-21">
@@ -79,8 +81,15 @@ export function desenhar(el) {
           ? `<div class="hab-hoje">${habitos.map(({ h, hoje: feito }) => `
               <button data-marcar="${h.id}" aria-pressed="${feito}" style="--c:${H.cor(h)}"><span class="bola">${feito ? icone.check(14) : ''}</span><span>${esc(h.nome)}</span></button>`).join('')}</div>`
           : '<div class="vazio">Nenhum hábito criado.</div>' })}
-      ${painel({ rot: 'Consultório · hoje', titulo: 'Quem você <em>atende</em>',
-        corpo: '<div class="vazio">As consultas do dia aparecem aqui quando o módulo de pacientes ficar pronto.</div>' })}
+      ${painel({ rot: 'Consultório · hoje', titulo: 'Quem você <em>atende</em>', ver: ['#/pacientes', 'Pacientes'],
+        corpo: consultas.length
+          ? `<div class="linhas">${consultas.map((p) => `
+              <div class="linha">
+                <span class="hora">${p.proximaHora ? p.proximaHora.replace(':', 'h').replace(/h00$/, 'h') : '—'}</span>
+                <button class="tx" data-ficha="${p.id}" style="text-align:left"><b>${esc(p.nome)}</b><small>${P.situacao(p).k ? `${P.situacao(p).restantes === 1 ? 'última consulta do pacote' : `${P.situacao(p).restantes} consultas a fazer`}` : 'sem pacote ativo'}</small></button>
+                <button class="chip acc" data-consulta-feita="${p.id}">feita</button>
+              </div>`).join('')}</div>`
+          : '<div class="vazio">Nenhuma consulta marcada para hoje. As datas vêm da “próxima consulta” de cada ficha ✦</div>' })}
       ${painel({ rot: 'Conteúdo · hoje', titulo: 'Peça do <em>dia</em>',
         corpo: '<div class="vazio">A peça programada para hoje aparece aqui quando o módulo de conteúdo ficar pronto.</div>' })}
     </div>`;
@@ -92,6 +101,8 @@ export function desenhar(el) {
     if (b.dataset.feita) await T.alternarFeita(tarefa(b.dataset.feita));
     else if (b.dataset.editar) T.abrirTarefa(tarefa(b.dataset.editar));
     else if (b.dataset.novaTarefa !== undefined) T.abrirTarefa();
+    else if (b.dataset.ficha) P.abrirFicha(b.dataset.ficha);
+    else if (b.dataset.consultaFeita) P.abrirConsultaFeita(b.dataset.consultaFeita);
     else if (b.dataset.marcar) await H.alternar(H.lista().find((h) => h.id === b.dataset.marcar), hoje);
   });
 }

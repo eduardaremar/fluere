@@ -28,7 +28,7 @@
 import * as dados from '../nucleo/dados.js';
 import * as avisos from '../nucleo/avisos.js';
 import { abrirFolha, fecharFolha, toast, confirmar } from '../nucleo/ui.js';
-import { esc, brl, r2, lerValor, isoDia, isoMes, mesPorExtenso, somarMeses } from '../nucleo/util.js';
+import { esc, brl, r2, lerValor, isoDia, isoMes, mesPorExtenso, somarMeses, normal } from '../nucleo/util.js';
 
 const COL = 'atendimentos';
 
@@ -169,16 +169,33 @@ function escolha(raiz, sel, aoMudar) {
 const botoes = (lista, atual) => lista.map((x) =>
   `<button type="button" data-v="${x.id}" aria-pressed="${x.id === atual}">${x.cor ? `<i style="background:${x.cor}"></i>` : ''}${x.nome}</button>`).join('');
 
+const ouvintesNovo = new Set();
+/** Registra uma função chamada a cada atendimento novo salvo; pode devolver um texto para o aviso curto. */
+export const aoNovoAtendimento = (fn) => ouvintesNovo.add(fn);
+
+/** Acha a ficha do paciente pelo nome digitado (prefere o id já ligado, se o nome ainda bate). */
+function acharPaciente(nome, idLigado) {
+  const n = normal(nome);
+  if (!n) return null;
+  const fichas = dados.lista('pacientes');
+  const ligada = idLigado && fichas.find((p) => p.id === idLigado);
+  if (ligada && normal(ligada.nome) === n) return ligada;
+  const iguais = fichas.filter((p) => normal(p.nome) === n);
+  return iguais.length === 1 ? iguais[0] : null;
+}
+
 /**
  * Abre a folha de atendimento (novo ou edição).
+ * `prefill`: campos já preenchidos (ex.: { paciente, pacienteId, local, tipo }).
+ * `aoSalvar`: chamado depois que uma venda NOVA é salva.
  * Se as regras ainda não foram preenchidas, abre primeiro a configuração.
  */
-export function abrirAtendimento(atend = null, { data } = {}) {
-  if (!temRegras() && !atend) { abrirRegras({ depois: () => abrirAtendimento(null, { data }) }); return; }
+export function abrirAtendimento(atend = null, { data, prefill = {}, aoSalvar } = {}) {
+  if (!temRegras() && !atend) { abrirRegras({ depois: () => abrirAtendimento(null, { data, prefill, aoSalvar }) }); return; }
   const novo = !atend;
   const a = atend ? structuredClone(atend) : {
     data: data || isoDia(), paciente: '', local: 'curitiba', tipo: 'avulsa', forma: 'pix',
-    recorrente: false, parcelas: [], motivoDesconto: '', nota: '',
+    recorrente: false, parcelas: [], motivoDesconto: '', nota: '', ...prefill,
   };
   const precoDe = (tipo, ym) => regras(ym).precos[tipo] || 0;
   if (novo) { a.valorTabela = precoDe(a.tipo, a.data.slice(0, 7)); a.valor = a.valorTabela; }
@@ -188,7 +205,8 @@ export function abrirAtendimento(atend = null, { data } = {}) {
     <h3>${novo ? 'Novo' : 'Editar'} <em>atendimento</em></h3>
     <form id="f-at" novalidate>
       <div class="fld"><label for="a-pac">Paciente ou descrição</label>
-        <input id="a-pac" value="${esc(a.paciente)}" placeholder="Ex.: Maria S." autocomplete="off" autofocus></div>
+        <input id="a-pac" list="a-pac-lista" value="${esc(a.paciente)}" placeholder="Ex.: Maria S." autocomplete="off" autofocus>
+        <datalist id="a-pac-lista">${dados.lista('pacientes').filter((p) => !p.arquivado).map((p) => `<option value="${esc(p.nome)}">`).join('')}</datalist></div>
       <div class="fld"><span class="l">Onde atendeu</span><div class="opcoes" id="a-local">${botoes(LOCAIS, a.local)}</div></div>
       <div class="fld"><span class="l">Tipo</span><div class="opcoes" id="a-tipo">${botoes(TIPOS, a.tipo)}</div></div>
       <div class="fld valor-grande"><label for="a-valor">Valor cobrado</label>
@@ -288,16 +306,22 @@ export function abrirAtendimento(atend = null, { data } = {}) {
       ps = [{ n: 1, valor, pago: rec, pagoEm: rec ? (antes?.pagoEm || isoDia()) : null }];
     }
     const tabela = Number(a.valorTabela) || 0;
-    await dados.salva(COL, {
+    const nome = $('#a-pac').value.trim();
+    const pacienteId = acharPaciente(nome, a.pacienteId)?.id ?? null;
+    const salvo = await dados.salva(COL, {
       ...a,
-      paciente: $('#a-pac').value.trim(),
+      paciente: nome, pacienteId,
       local: lerLocal(), tipo: lerTipo(), forma: lerForma(), recorrente,
       valorTabela: tabela, valor,
       motivoDesconto: tabela && valor < tabela ? $('#a-desc').value.trim() : '',
       data: $('#a-data').value || isoDia(), nota: $('#a-nota').value.trim(), parcelas: ps,
     });
+    // Outros módulos (pacientes) podem reagir a uma venda nova e devolver uma mensagem.
+    let aviso = '';
+    if (novo) for (const fn of ouvintesNovo) aviso = (await fn(salvo)) || aviso;
     fecharFolha();
-    toast(novo ? 'Atendimento lançado ✦' : 'Atendimento salvo.');
+    toast(aviso || (novo ? 'Atendimento lançado ✦' : 'Atendimento salvo.'));
+    if (novo) aoSalvar?.(salvo);
   };
 
   f.querySelector('[data-acao="apagar"]')?.addEventListener('click', async () => {

@@ -83,7 +83,7 @@ O painel **Hoje** avisa quando o último backup passou de 7 dias.
 | 0 | Fundação: visual, navegação, senha, criptografia, backup, instalação | ✅ pronta para validar |
 | 1 | Financeiro do consultório | ✅ aprovada |
 | 2 | Gastos CPF/CNPJ e resumo geral (+ sincronização Mac/iPhone) | ✅ gastos prontos para validar; sincronização falta |
-| 3 | Pacientes | |
+| 3 | Pacientes | ✅ pronto para validar |
 | 4 | Tarefas e planejador da semana | ✅ aprovada |
 | 5 | Hábitos | ✅ aprovada |
 | 6 | Metas do semestre | |
@@ -172,3 +172,13 @@ Dê dois cliques em **Publicar Fluere.command**.
 - **Ajustes:** nomes dos cartões, limite de gastos e meta de sobra (valem todo mês) e as categorias.
 - **Custos fixos do consultório** (contadora, CRN, sistemas) já são descontados no líquido do Módulo 1, por isso não entram de novo aqui.
 - **Resumo geral:** entrou (líquido do consultório) − saiu (gastos e contas fixas) = sobrou, com rosca por categoria, barras dos últimos 6 meses e dicas automáticas.
+
+## Pacientes (barra de baixo → Pacientes)
+
+- **Ficha:** nome, WhatsApp, nascimento, como chegou até você, onde costuma atender e uma anotação. **Sem dados clínicos.** Toque num paciente para abrir a ficha.
+- **Agenda:** continua no seu calendário. O Fluere guarda só a **próxima consulta** de cada paciente (dia e hora), que aparece no painel Hoje.
+- **Pacote:** "Vender pacote ou consulta" abre o lançamento do financeiro já com o paciente preenchido. Ao salvar, o pacote abre sozinho: avulsa = 1 consulta, trimestral = 3, semestral = 4 (a quantidade vem das regras do consultório). Se você lançar um atendimento digitando o nome de um paciente cadastrado, o pacote também abre.
+- **Consulta feita:** botão na ficha, no painel Hoje ou em "+ Novo". Atualiza o pacote (ex.: 2 de 3) e pergunta a data da próxima consulta. Na última, avisa para oferecer a renovação. Errou? "Desfazer a última consulta registrada", na ficha.
+- **Avisos:** retorno pendente (pacote ativo sem próxima consulta), consulta que já passou sem ser registrada, pacote na última consulta e aniversários da semana.
+- **Vendas antigas:** se um atendimento de pacote foi lançado antes de cadastrar o paciente, abra a ficha (o nome precisa ser igual) e toque em "Abrir pacote" ao lado do pagamento.
+- **Arquivar** esconde o paciente das listas sem apagar nada. **Apagar** remove a ficha e os pacotes; as vendas do financeiro continuam.
