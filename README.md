@@ -81,11 +81,11 @@ O painel **Hoje** avisa quando o último backup passou de 7 dias.
 | Etapa | O que | Situação |
 |---|---|---|
 | 0 | Fundação: visual, navegação, senha, criptografia, backup, instalação | ✅ pronta para validar |
-| 1 | Financeiro do consultório | |
+| 1 | Financeiro do consultório | ✅ pronta para validar |
 | 2 | Gastos CPF/CNPJ e resumo geral (+ sincronização Mac/iPhone) | |
 | 3 | Pacientes | |
-| 4 | Tarefas e planejador da semana | ✅ pronta para validar |
-| 5 | Hábitos | ✅ pronta para validar |
+| 4 | Tarefas e planejador da semana | ✅ aprovada |
+| 5 | Hábitos | ✅ aprovada |
 | 6 | Metas do semestre | |
 | 7 | Conteúdo | |
 | 8 | Trabalhos paralelos (RT pousadas, Bela Flor) | |
@@ -151,3 +151,13 @@ Dê dois cliques em **Publicar Fluere.command**.
 - **Criar ou editar:** "Novo hábito", ou toque no nome do hábito. Ele pode ser **todo dia** ou **algumas vezes por semana**.
 - **Lembrete:** escolha um horário e o Fluere cria um evento que se repete no Calendário, com aviso na hora.
 - **Números do mês:** melhor sequência, % cumprida (respeitando a frequência de cada hábito) e descobertas automáticas, como "nos dias em que você faz X, Y acontece 2x mais". Tudo é calculado no próprio aparelho.
+
+## Financeiro do consultório (Dinheiro → Consultório)
+
+- **Primeira vez:** toque em "Configurar agora" e preencha o percentual de Campo Largo, o aluguel de Curitiba, o imposto, a meta, os preços de tabela e os custos fixos. Tudo fica no seu cofre, embaralhado. Nada disso aparece no código público.
+- **Mudar uma regra:** "ajustar regras e custos". A mudança vale a partir do mês que está aberto na tela; os meses anteriores continuam com a regra antiga.
+- **Lançar um atendimento:** "+ Novo" → Atendimento. O valor de tabela aparece sozinho conforme o tipo. Se você cobrar menos, ele mostra o desconto e pede o motivo. A prévia mostra quanto fica com você.
+- **Plano recorrente:** quando o paciente paga a cada consulta, escolha "Plano recorrente". O sistema cria uma parcela por consulta e você marca cada uma ao receber.
+- **Tudo conta no mês da venda:** bruto, repasse de Campo Largo e imposto. O que falta pagar aparece como "a receber", no painel e no Hoje.
+- **Contas do mês:** repasse, aluguel, imposto e custos fixos, com caixinha para marcar como pagos. O Hoje avisa quando ficou alguma conta do mês anterior.
+- **Extrato:** busca por paciente, tipo ou forma de pagamento, e filtros por local e "a receber". Um toque no selo marca como recebido.

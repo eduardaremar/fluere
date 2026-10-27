@@ -9,7 +9,7 @@
    ARQUIVOS e aumente o número da VERSAO.
    ========================================================= */
 
-const VERSAO = 'fluere-v7';
+const VERSAO = 'fluere-v9';
 
 const ARQUIVOS = [
   './',
@@ -36,6 +36,7 @@ const ARQUIVOS = [
   'js/nucleo/graficos.js',
   'js/modulos/tarefas.js',
   'js/modulos/habitos.js',
+  'js/modulos/consultorio.js',
   'js/telas/bloqueio.js',
   'js/telas/hoje.js',
   'js/telas/dinheiro.js',
@@ -46,7 +47,10 @@ const ARQUIVOS = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(VERSAO).then((c) => c.addAll(ARQUIVOS)).then(() => self.skipWaiting()));
+  // cache: 'reload' = busca sempre a versão mais nova, ignorando cópias antigas do navegador
+  e.waitUntil(caches.open(VERSAO)
+    .then((c) => c.addAll(ARQUIVOS.map((u) => new Request(u, { cache: 'reload' }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {

@@ -25,6 +25,7 @@ import * as rotina from './telas/rotina.js';
 import * as mais from './telas/mais.js';
 import * as T from './modulos/tarefas.js';
 import * as H from './modulos/habitos.js';
+import * as C from './modulos/consultorio.js';
 
 /* ---------- telas da barra de baixo (celular) ---------- */
 const TELAS = [
@@ -60,8 +61,9 @@ const MENU_LATERAL = [
 /* ---------- itens do botão "+ Novo" ---------- */
 // Só aparecem os atalhos que já funcionam. Quando um módulo novo ficar
 // pronto, acrescente aqui um item com a função que abre o formulário dele.
-// Próximos: Atendimento, Gasto, Consulta feita, Ideia de conteúdo.
+// Próximos: Gasto, Consulta feita, Ideia de conteúdo.
 const NOVOS = [
+  { nome: 'Atendimento', desc: 'Consulta ou acompanhamento vendido', icone: icone.atendimento, abrir: () => C.abrirAtendimento() },
   { nome: 'Tarefa', desc: 'Com área, dia, prazo e tempo', icone: icone.tarefa, abrir: () => T.abrirTarefa() },
   { nome: 'Hábito', desc: 'Todo dia ou algumas vezes por semana', icone: icone.revisao, abrir: () => H.abrirHabito() },
 ];
@@ -201,8 +203,15 @@ document.addEventListener('click', (e) => {
 });
 
 /* ---------- funcionar sem internet (service worker) ---------- */
+// No Mac (localhost) o modo offline fica desligado: assim você sempre vê a versão mais nova.
+const local = ['localhost', '127.0.0.1'].includes(location.hostname);
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-  navigator.serviceWorker.register('sw.js').catch((e) => console.warn('Sem modo offline:', e));
+  if (local) {
+    navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.unregister()));
+    caches.keys().then((ks) => ks.forEach((k) => caches.delete(k)));
+  } else {
+    navigator.serviceWorker.register('sw.js').catch((e) => console.warn('Sem modo offline:', e));
+  }
 }
 
 if (!location.hash) history.replaceState(null, '', '#/hoje');

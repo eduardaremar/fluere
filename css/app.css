@@ -156,7 +156,7 @@ h1 em,h2 em,.titulo em{font-style:italic;color:var(--acc)}
 .kpi.rosa{background:var(--rosa)}
 .kpi.verde{background:color-mix(in srgb,var(--pos-bg) 45%,var(--card))}
 .kpi .v{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-.kpi .v b{font:400 clamp(30px,6.5vw,44px)/1 var(--disp);font-variant-numeric:lining-nums tabular-nums;letter-spacing:-.01em}
+.kpi .v b{font:400 clamp(26px,6.6vw,44px)/1 var(--disp);font-variant-numeric:lining-nums tabular-nums;letter-spacing:-.01em}
 .kpi .v span{color:var(--soft);font-size:14px}
 .kpi small{color:var(--soft);font-size:12.5px}
 .valor{font:400 30px/1.05 var(--disp);font-variant-numeric:lining-nums tabular-nums;white-space:nowrap}
@@ -409,3 +409,35 @@ h1 em,h2 em,.titulo em{font-style:italic;color:var(--acc)}
 .hab-hoje button .bola{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--c);display:grid;place-items:center;color:var(--card)}
 .hab-hoje button[aria-pressed="true"] .bola{background:var(--c)}
 .hab-hoje button[aria-pressed="true"] span:last-child{color:var(--soft);text-decoration:line-through}
+
+/* =========================================================
+   MÓDULO FINANCEIRO DO CONSULTÓRIO
+   ========================================================= */
+.nav-mes{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.valor-grande input{font:400 30px/1.1 var(--disp);font-variant-numeric:lining-nums tabular-nums;font-feature-settings:"lnum" 1;min-height:58px}
+.previa{background:var(--manteiga2);border:1px solid var(--manteiga);border-radius:14px;padding:12px 14px;font-size:14px;margin-bottom:14px}
+.previa small{color:var(--soft)}
+.parcelas{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.parcelas button{display:flex;flex-direction:column;gap:2px;padding:10px;border-radius:14px;border:1px solid var(--line);background:var(--card);text-align:left}
+.parcelas button b{font-size:12px;color:var(--soft)}
+.parcelas button small{font-size:11.5px;color:var(--neg)}
+.parcelas button[aria-pressed="true"]{background:color-mix(in srgb,var(--pos-bg) 50%,var(--card));border-color:var(--pos-bg)}
+.parcelas button[aria-pressed="true"] small{color:var(--pos)}
+.com-sufixo{display:flex;align-items:center;gap:8px}
+.com-sufixo input{flex:1;min-width:0}
+.com-sufixo span{font-size:13px;color:var(--soft);white-space:nowrap}
+.par3{grid-template-columns:repeat(3,1fr)}
+@media (max-width:520px){.par3{grid-template-columns:1fr}}
+.sheet .rot.acc{margin:6px 0 10px}
+.custo{display:grid;grid-template-columns:1.4fr 1fr auto auto;gap:8px;margin-bottom:8px;align-items:center}
+.custo input,.custo select{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:10px 12px;min-height:44px;font-size:15px}
+.custo .c-tirar{width:36px;height:36px;border-radius:50%;color:var(--soft);font-size:20px}
+.busca{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:14px;padding:11px 14px;font-size:15px}
+.dia-ext{font-size:12px;font-weight:600;color:var(--soft);margin:6px 2px -4px}
+.pt{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:middle}
+.num.menos{color:var(--soft)}
+.pos-txt{color:var(--pos)}
+.neg-txt{color:var(--neg)}
+.linha > .marca-area{width:10px;height:10px;border-radius:50%}
+.chips .chip[data-receber]{cursor:pointer}
+.linhas.quebra .tx b{white-space:normal}
