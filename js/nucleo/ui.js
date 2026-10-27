@@ -91,14 +91,15 @@ export function areaLimpa(el) {
 
 /**
  * Cabeçalho padrão de uma tela, com os botões de avisos e de bloquear.
- *   cabecalho({ sup:'Finanças', titulo:'Dinheiro <em>do mês</em>', voltar:['#/mais','Mais'], avisos:2 })
+ *   cabecalho({ sup:'Finanças', titulo:'Dinheiro do mês', voltar:['#/mais','Mais'], avisos:2 })
+ *   (serif:true usa a serifada discreta, só na saudação do Hoje)
  */
-export function cabecalho({ sup = '', titulo, voltar = null, avisos = 0 }) {
+export function cabecalho({ sup = '', titulo, voltar = null, avisos = 0, serif = false }) {
   return `<header class="top">
     <div>
       ${voltar ? `<a class="voltar" href="${voltar[0]}">${icone.voltar(16)} ${voltar[1]}</a>` : ''}
       ${sup ? `<div class="sup">${sup}</div>` : ''}
-      <h1>${titulo}</h1>
+      <h1${serif ? ' class="serif"' : ''}>${titulo}</h1>
     </div>
     <div class="acoes">
       <a class="redondo" href="#/hoje" aria-label="Avisos${avisos ? `: ${avisos}` : ''}">${icone.sino(20)}${avisos ? `<span class="cont">${avisos}</span>` : ''}</a>

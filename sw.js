@@ -9,7 +9,7 @@
    ARQUIVOS e aumente o número da VERSAO.
    ========================================================= */
 
-const VERSAO = 'fluere-v13';
+const VERSAO = 'fluere-v14';
 
 const ARQUIVOS = [
   './',
@@ -19,7 +19,6 @@ const ARQUIVOS = [
   'css/app.css',
   'fontes/eb-garamond-latin-400-normal.woff2',
   'fontes/eb-garamond-latin-500-normal.woff2',
-  'fontes/eb-garamond-latin-400-italic.woff2',
   'icones/logo.png',
   'icones/logo-escuro.png',
   'icones/icone-192.png',

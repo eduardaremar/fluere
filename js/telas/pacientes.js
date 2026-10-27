@@ -13,13 +13,16 @@ import * as P from '../modulos/pacientes.js';
 import * as C from '../modulos/consultorio.js';
 
 const estado = { busca: '', filtro: 'tudo' };
-const FILTROS = [['tudo', 'Todos'], ['ativos', 'Com pacote'], ['acabando', 'Acabando'], ['sem', 'Sem próxima'], ['arquivados', 'Arquivados']];
+const FILTROS = [['tudo', 'Todos'], ['ativos', 'Com pacote'], ['acabando', 'Acabando'], ['sem', 'Sem próxima'], ['curitiba', 'Curitiba'], ['campolargo', 'Campo Largo'], ['online', 'Online'], ['arquivados', 'Arquivados']];
+const corLocal = (id) => C.LOCAIS.find((l) => l.id === id)?.cor;
+const ponto = (id) => (corLocal(id) ? `<span class="dot" style="background:${corLocal(id)}"></span>` : '');
 
 const curto = (tipo) => C.TIPOS.find((t) => t.id === tipo)?.curto ?? tipo;
 
 function linha({ p, s }, hoje) {
   const k = s.k;
   const detalhe = [
+    p.local ? C.nomeLocal(p.local) : null,
     k ? `${curto(k.tipo)} · ${(k.consultas || []).length} de ${k.total}` : 'sem pacote ativo',
     p.proxima ? `próxima ${P.proximaTexto(p, hoje)}` : null,
   ].filter(Boolean).join(' · ');
@@ -28,7 +31,7 @@ function linha({ p, s }, hoje) {
     : s.acabando ? '<span class="chip acc">acabando</span>'
     : '';
   return `<div class="linha">
-    <button type="button" class="inicial" data-ficha="${p.id}" aria-label="Abrir ficha de ${esc(p.nome)}">${esc(p.nome.trim().charAt(0).toUpperCase())}</button>
+    <button type="button" class="inicial ${corLocal(p.local) ? 'loc' : ''}" ${corLocal(p.local) ? `style="--c:${corLocal(p.local)}"` : ''} data-ficha="${p.id}" aria-label="Abrir ficha de ${esc(p.nome)}">${esc(p.nome.trim().charAt(0).toUpperCase())}</button>
     <button type="button" class="tx" data-ficha="${p.id}"><b>${esc(p.nome)}</b><small>${esc(detalhe)}</small></button>
     ${selo}
   </div>`;
@@ -40,6 +43,7 @@ function listar(hoje) {
     .map((p) => ({ p, s: P.situacao(p, hoje) }));
   const lista = todos.filter(({ p, s }) => {
     if (q && !normal(`${p.nome} ${p.origem || ''}`).includes(q)) return false;
+    if (['curitiba', 'campolargo', 'online'].includes(estado.filtro)) return p.local === estado.filtro;
     if (estado.filtro === 'ativos') return s.ativo;
     if (estado.filtro === 'acabando') return s.acabando;
     if (estado.filtro === 'sem') return s.semProxima || s.passada;
@@ -75,12 +79,12 @@ export function desenhar(el, partes = []) {
             <input class="busca" type="search" id="busca-pac" placeholder="Buscar paciente" value="${esc(estado.busca)}" autocomplete="off" style="flex:1;min-width:160px;width:auto">
             <button type="button" class="btn pri" data-novo-pac>${icone.soma(16)} Paciente</button>
           </div>
-          <div class="filtros" style="margin-bottom:6px">${FILTROS.map(([v, n]) => `<button type="button" class="chip ${estado.filtro === v ? 'acc' : ''}" data-filtro="${v}">${n}</button>`).join('')}</div>
+          <div class="filtros" style="margin-bottom:6px">${FILTROS.map(([v, n]) => `<button type="button" class="chip ${estado.filtro === v ? 'acc' : ''}" data-filtro="${v}">${ponto(v)}${n}</button>`).join('')}</div>
           <div id="lista-pac">${listar(hoje)}</div>` })}
       <div class="coluna">
         ${painel({ rot: 'Agenda', titulo: 'Próximas <em>consultas</em>',
           corpo: proximas.length ? `<div class="linhas">${proximas.map((p) => `
-            <div class="linha"><button type="button" class="tx" data-ficha="${p.id}"><b>${esc(p.nome)}</b><small>${P.proximaTexto(p, hoje)}</small></button></div>`).join('')}</div>`
+            <div class="linha"><button type="button" class="tx" data-ficha="${p.id}"><b>${esc(p.nome)}</b><small>${ponto(p.local)}${P.proximaTexto(p, hoje)}</small></button></div>`).join('')}</div>`
             : '<div class="vazio">Nenhuma consulta marcada. A agenda fica no seu calendário; aqui só a próxima de cada paciente ✦</div>' })}
         ${painel({ rot: 'Para cuidar', titulo: 'Pendências',
           corpo: pend.length ? `<ul class="alerts">${pend.map((a) => `<li><button type="button" class="alert ${a.tipo || ''}" data-ficha="${a.irPara.split('/').pop()}"><span class="d"></span><div>${a.texto}</div></button></li>`).join('')}</ul>`

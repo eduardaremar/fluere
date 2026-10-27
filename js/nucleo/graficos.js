@@ -13,7 +13,7 @@ const soma = (xs) => xs.reduce((a, b) => a + (Number(b) || 0), 0);
 const pct = (v, total) => (total > 0 ? Math.round((v / total) * 100) : 0);
 
 /** Lista de cores padrão para séries (repete se tiver mais itens). */
-export const CORES = ['var(--g1)', 'var(--g2)', 'var(--g3)', 'var(--g4)', 'var(--g5)', 'var(--g6)', 'var(--g7)'];
+export const CORES = ['var(--g1)', 'var(--g2)', 'var(--g3)', 'var(--g4)', 'var(--g5)', 'var(--g6)', 'var(--g7)', 'var(--g8)'];
 
 /**
  * Rosca (como a dos gastos do mês).

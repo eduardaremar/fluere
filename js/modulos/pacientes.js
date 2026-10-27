@@ -391,7 +391,7 @@ export function abrirFicha(id) {
     <div id="ficha">
       <h3>${esc(p.nome)}</h3>
       <div class="chips" style="margin-bottom:14px">
-        ${p.local ? `<span class="chip">${esc(C.nomeLocal(p.local))}</span>` : ''}
+        ${p.local ? `<span class="chip"><span class="dot" style="background:${C.LOCAIS.find((l) => l.id === p.local)?.cor}"></span>${esc(C.nomeLocal(p.local))}</span>` : ''}
         ${idade != null ? `<span class="chip">${plural(idade, 'ano', 'anos')}</span>` : ''}
         ${p.origem ? `<span class="chip">veio por ${esc(p.origem)}</span>` : ''}
         ${p.arquivado ? '<span class="chip neg">arquivado</span>' : ''}

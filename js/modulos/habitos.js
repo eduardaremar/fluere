@@ -18,7 +18,8 @@ import { esc, isoDia, isoMes, diasNoMes } from '../nucleo/util.js';
 const COL = 'habitos';
 const COL_M = 'marcacoes';
 
-export const CORES = ['var(--g4)', 'var(--g5)', 'var(--g3)', 'var(--g6)', 'var(--g2)', 'var(--g7)', 'var(--g1)'];
+// as quatro primeiras são bem diferentes entre si (os hábitos iniciais usam 0 a 3)
+export const CORES = ['var(--g4)', 'var(--g6)', 'var(--g3)', 'var(--g7)', 'var(--g5)', 'var(--g2)', 'var(--g8)', 'var(--g1)'];
 export const cor = (h) => CORES[(Number(h.cor) || 0) % CORES.length];
 
 /* Hábitos combinados na entrevista: criados uma única vez, no primeiro acesso. */

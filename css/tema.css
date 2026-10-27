@@ -3,85 +3,86 @@
    Fontes, cores e medidas usadas em todo o sistema.
    Para mudar uma cor do sistema inteiro, mude aqui.
 
-   Paleta definida pela Eduarda:
-   títulos #a30e59 · fundo #f5f5f5 · manteiga #fff3c6
+   Paleta definida pela Eduarda (versão verde-oliva):
+   títulos #5c5d4a · fundo #f5f5f5 · manteiga #fff3c6
    verde #d1deac · vermelho #f5b7b7 · amarelo claro #fffae7
-   Cores lisas, sem degradês.
+   Cores lisas, sem degradês. Visual: minimalista, orgânico,
+   cartões leves (linha fina, sem sombra), títulos pequenos.
    ========================================================= */
 
-/* Títulos: EB Garamond, serifada fina (guardada junto com o sistema). A Cormorant foi
-   trocada porque desenha os acentos (ê, é) tortos e o "0" parecido com "o".
-   Textos: Helvetica Now Display se estiver instalada; senão a Helvetica do Mac/iPhone.
-   */
+/* Títulos, números e textos: Helvetica Now Display se estiver instalada; senão a Helvetica do Mac/iPhone.
+   A serifada EB Garamond (guardada junto com o sistema) aparece só, bem discreta, na saudação do painel Hoje.
+   Sem itálico em nenhum lugar. */
 @font-face{font-family:"EB Garamond";font-style:normal;font-weight:400;font-display:swap;src:url(../fontes/eb-garamond-latin-400-normal.woff2) format("woff2")}
 @font-face{font-family:"EB Garamond";font-style:normal;font-weight:500 700;font-display:swap;src:url(../fontes/eb-garamond-latin-500-normal.woff2) format("woff2")}
-@font-face{font-family:"EB Garamond";font-style:italic;font-weight:400 700;font-display:swap;src:url(../fontes/eb-garamond-latin-400-italic.woff2) format("woff2")}
 
 /* ---------- modo claro (padrão) ---------- */
 :root{
   --bg:#F5F5F5;        /* fundo da página */
   --card:#FFFFFF;      /* cartões */
-  --bg2:#EFEDEB;       /* preenchimentos neutros (trilhos, abas) */
-  --tx:#2A1A22;        /* texto principal */
-  --soft:#7A6870;      /* texto secundário */
-  --line:#E8E2E4;      /* bordas */
+  --bg2:#ECECE5;       /* preenchimentos neutros (trilhos, abas) */
+  --tx:#35362B;        /* texto principal */
+  --soft:#7C7D6C;      /* texto secundário */
+  --line:#E6E6DE;      /* bordas */
 
-  --acc:#A30E59;       /* títulos, botões e destaques */
-  --on-acc:#FFFFFF;
-  --titulo:#A30E59;    /* cor dos títulos */
+  --acc:#5C5D4A;       /* títulos, botões e destaques */
+  --on-acc:#F5F5F5;
+  --titulo:#5C5D4A;    /* cor dos títulos */
   --manteiga:#FFF3C6;  /* detalhes */
   --manteiga2:#FFFAE7; /* amarelo mais clarinho (fundos suaves) */
-  --rosa:#FBE6EF;      /* tom clarinho do título (iniciais, etiquetas) */
+  --rosa:#EEEEE4;      /* tom clarinho do verde-oliva (iniciais, etiquetas) */
 
   /* estados */
-  --pos-bg:#D1DEAC; --pos:#4A5A1C;        /* verde: positivo / deu certo */
-  --mid-bg:#FFF3C6; --mid:#7A5A00;        /* amarelo: intermediário */
-  --neg-bg:#F5B7B7; --neg:#8C1530; --neg-forte:#F5B7B7; /* vermelho: alerta */
+  --pos-bg:#D1DEAC; --pos:#4B5A22;        /* verde: positivo / deu certo */
+  --mid-bg:#FFF3C6; --mid:#75590A;        /* amarelo: intermediário */
+  --neg-bg:#F5B7B7; --neg:#8C2A33; --neg-forte:#F5B7B7; /* vermelho: alerta */
 
-  /* cores dos gráficos */
-  --g1:#A30E59;   /* título */
-  --g2:#F5B7B7;   /* vermelho claro */
-  --g3:#F1DC8C;   /* manteiga mais forte (para aparecer sobre branco) */
-  --g4:#D1DEAC;   /* verde */
-  --g5:#BFD3E6;   /* azul */
-  --g6:#D9C9EA;   /* lilás */
-  --g7:#F2C9A6;   /* pêssego */
+  /* cores dos gráficos (tons orgânicos, combinam com a paleta) */
+  --g1:#5C5D4A;   /* verde-oliva */
+  --g2:#F0A9A5;   /* rosé (o vermelho claro da paleta, um pouco mais firme) */
+  --g3:#E6C86A;   /* mostarda suave (a manteiga, mais forte para aparecer) */
+  --g4:#B4CB86;   /* verde folha (o verde da paleta, mais firme) */
+  --g5:#7FA89B;   /* eucalipto */
+  --g6:#8FAFC4;   /* azul acinzentado */
+  --g7:#D9906F;   /* terracota */
+  --g8:#B9A3C9;   /* lilás acinzentado */
 
-  --disp:"EB Garamond",Georgia,"Times New Roman",serif;
   --body:"Helvetica Now Display","Helvetica Neue",Helvetica,Arial,sans-serif;
-  --shadow:0 1px 2px rgba(42,26,34,.04),0 8px 24px rgba(42,26,34,.05);
-  --raio:24px;
+  --disp:var(--body);  /* títulos e números: a mesma fonte dos textos */
+  --serif:"EB Garamond",Georgia,"Times New Roman",serif;  /* só a saudação do Hoje */
+  --shadow:0 1px 2px rgba(53,54,43,.03);
+  --raio:18px;
   --tabbar-h:64px;
-  --lateral-w:264px;
+  --lateral-w:248px;
   color-scheme:light;
 }
 
 /* ---------- modo escuro: automático (segue o iPhone/Mac) ---------- */
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#121011; --card:#1C1819; --bg2:#272123;
-    --tx:#F3ECEE; --soft:#A8999F; --line:#332B2E;
-    --acc:#F0A3C6; --on-acc:#2A0E1C; --titulo:#F7C8DC;
-    --manteiga:#3A3420; --manteiga2:#252117; --rosa:#3A2230;
-    --pos-bg:#2F3A1F; --pos:#D1DEAC;
-    --mid-bg:#3A3420; --mid:#FFF3C6;
-    --neg-bg:#3F2226; --neg:#F5B7B7; --neg-forte:#F5B7B7;
-    --g1:#F0A3C6; --g2:#E79A9A; --g3:#D9C277; --g4:#AFC283; --g5:#8FA9C2; --g6:#A997C4; --g7:#CFA27E;
-    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.25);
+    --bg:#2E2B27; --card:#38342F; --bg2:#433F39;
+    --tx:#F2F0E8; --soft:#A9A596; --line:#4A463F;
+    --acc:#D9D6BF; --on-acc:#2E2B27; --titulo:#F5F5F5;
+    --manteiga:#4A4429; --manteiga2:#3F3B2D; --rosa:#45423A;
+    --pos-bg:#3C4528; --pos:#D1DEAC;
+    --mid-bg:#4A4429; --mid:#FFF3C6;
+    --neg-bg:#4F3433; --neg:#F5B7B7; --neg-forte:#F5B7B7;
+    --g1:#D9D6BF; --g2:#E8A5A0; --g3:#D9BE62; --g4:#A9C27C; --g5:#7FB3A3; --g6:#8EB0C8; --g7:#CF8A6C; --g8:#B7A0C8;
+    --shadow:0 1px 2px rgba(0,0,0,.25);
     color-scheme:dark;
   }
 }
 /* ... ou escolhido à mão em Ajustes */
 :root[data-theme="dark"]{
-  --bg:#121011; --card:#1C1819; --bg2:#272123;
-  --tx:#F3ECEE; --soft:#A8999F; --line:#332B2E;
-  --acc:#F0A3C6; --on-acc:#2A0E1C; --titulo:#F7C8DC;
-  --manteiga:#3A3420; --manteiga2:#252117; --rosa:#3A2230;
-  --pos-bg:#2F3A1F; --pos:#D1DEAC;
-  --mid-bg:#3A3420; --mid:#FFF3C6;
-  --neg-bg:#3F2226; --neg:#F5B7B7; --neg-forte:#F5B7B7;
-  --g1:#F0A3C6; --g2:#E79A9A; --g3:#D9C277; --g4:#AFC283; --g5:#8FA9C2; --g6:#A997C4; --g7:#CFA27E;
-  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.25);
+  --bg:#2E2B27; --card:#38342F; --bg2:#433F39;
+  --tx:#F2F0E8; --soft:#A9A596; --line:#4A463F;
+  --acc:#D9D6BF; --on-acc:#2E2B27; --titulo:#F5F5F5;
+  --manteiga:#4A4429; --manteiga2:#3F3B2D; --rosa:#45423A;
+  --pos-bg:#3C4528; --pos:#D1DEAC;
+  --mid-bg:#4A4429; --mid:#FFF3C6;
+  --neg-bg:#4F3433; --neg:#F5B7B7; --neg-forte:#F5B7B7;
+  --g1:#D9D6BF; --g2:#E8A5A0; --g3:#D9BE62; --g4:#A9C27C; --g5:#7FB3A3; --g6:#8EB0C8; --g7:#CF8A6C; --g8:#B7A0C8;
+  --shadow:0 1px 2px rgba(0,0,0,.25);
   color-scheme:dark;
 }
 

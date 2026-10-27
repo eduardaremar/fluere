@@ -244,8 +244,8 @@ function metas() {
   const inicio = new Date(hoje.getFullYear(), hoje.getMonth() < 6 ? 0 : 6, 1);
   const semanaN = Math.min(26, Math.floor((hoje - inicio) / (7 * 86400000)) + 1);
   const pilares = [
-    { nome: 'Carreira', cor: 'var(--g6)' }, { nome: 'Finanças', cor: 'var(--g4)' }, { nome: 'Saúde', cor: 'var(--g5)' },
-    { nome: 'Relações', cor: 'var(--g2)' }, { nome: 'Lazer', cor: 'var(--g3)' }, { nome: 'Desenvolvimento', cor: 'var(--g7)' },
+    { nome: 'Carreira', cor: 'var(--g6)' }, { nome: 'Finanças', cor: 'var(--g3)' }, { nome: 'Saúde', cor: 'var(--g4)' },
+    { nome: 'Relações', cor: 'var(--g2)' }, { nome: 'Lazer', cor: 'var(--g8)' }, { nome: 'Desenvolvimento', cor: 'var(--g7)' },
   ];
   const meses = hoje.getMonth() < 6 ? ['jan', 'fev', 'mar', 'abr', 'mai', 'jun'] : ['jul', 'ago', 'set', 'out', 'nov', 'dez'];
   return `
@@ -258,13 +258,13 @@ function metas() {
           <div><div class="rot">Progresso geral</div><div class="valor g">0%</div><small style="color:var(--soft)">faltam ${26 - semanaN} semanas</small></div>
         </div>` })}
       ${painel({ rot: 'Por pilar', titulo: '',
-        corpo: pilares.map((p) => `<div style="display:grid;grid-template-columns:120px 1fr 40px;gap:12px;align-items:center;font-size:14px">
-          <span>${p.nome}</span>${G.trilho(0, p.cor)}<span style="color:var(--soft);text-align:right">0%</span></div>`).join('') })}
+        corpo: pilares.map((p) => `<div style="display:grid;grid-template-columns:150px 1fr 40px;gap:12px;align-items:center;font-size:14px">
+          <span style="white-space:nowrap"><span class="dot" style="background:${p.cor}"></span>${p.nome}</span>${G.trilho(0, p.cor)}<span style="color:var(--soft);text-align:right">0%</span></div>`).join('') })}
     </div>
     <div class="grade g-3">${pilares.map((p) => `
       <section class="painel" style="gap:10px">
         <div style="display:flex;align-items:center;gap:12px">${G.anel(0, { tam: 44, esp: 4, cor: p.cor, texto: '0' })}
-          <div><b style="font:400 22px/1.1 var(--disp);color:var(--titulo)">${p.nome}</b><br><small style="color:var(--soft)">0 metas</small></div></div>
-        <div style="font-size:13.5px;color:var(--soft);font-style:italic">Nenhuma meta criada ainda.</div>
+          <div><b style="font:500 15px/1.2 var(--disp);color:var(--titulo)"><span class="dot" style="background:${p.cor}"></span>${p.nome}</b><br><small style="color:var(--soft)">0 metas</small></div></div>
+        <div style="font-size:13.5px;color:var(--soft)">Nenhuma meta criada ainda.</div>
       </section>`).join('')}</div>`;
 }

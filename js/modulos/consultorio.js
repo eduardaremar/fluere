@@ -34,8 +34,8 @@ const COL = 'atendimentos';
 
 export const LOCAIS = [
   { id: 'curitiba', nome: 'Curitiba', cor: 'var(--g1)' },
-  { id: 'campolargo', nome: 'Campo Largo', cor: 'var(--g2)' },
-  { id: 'online', nome: 'Online', cor: 'var(--g3)' },
+  { id: 'campolargo', nome: 'Campo Largo', cor: 'var(--g7)' },
+  { id: 'online', nome: 'Online', cor: 'var(--g5)' },
 ];
 export const TIPOS = [
   { id: 'avulsa', nome: 'Consulta avulsa', curto: 'Avulsa', cor: 'var(--g4)' },
@@ -431,11 +431,7 @@ avisos.registrar('consultorio', () => {
     lista.push({ id: 'regras', tipo: 'mid', prioridade: 2, irPara: '#/dinheiro/consultorio', texto: 'Configure as regras do consultório (percentual, aluguel, imposto e preços) para o financeiro começar a calcular.' });
     return lista;
   }
-  const pend = pendentes();
-  if (pend.length) {
-    const total = r2(pend.reduce((s, a) => s + aReceberDe(a), 0));
-    lista.push({ id: 'a-receber', tipo: 'warn', prioridade: 4, irPara: '#/dinheiro/consultorio', texto: `<strong>${brl(total)}</strong> a receber de ${pend.length} ${pend.length === 1 ? 'atendimento' : 'atendimentos'}.` });
-  }
+  // O que falta receber dos pacientes fica só na aba Dinheiro → Consultório (não vira aviso no Hoje).
   // Contas do mês anterior ainda não marcadas como pagas
   const ant = calcular(somarMeses(isoMes(), -1));
   const abertas = ant.atendimentos ? ant.contas.filter((c) => !c.pago) : [];
