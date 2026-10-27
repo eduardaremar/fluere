@@ -9,7 +9,7 @@
    ARQUIVOS e aumente o número da VERSAO.
    ========================================================= */
 
-const VERSAO = 'fluere-v6';
+const VERSAO = 'fluere-v7';
 
 const ARQUIVOS = [
   './',
@@ -34,6 +34,8 @@ const ARQUIVOS = [
   'js/nucleo/ui.js',
   'js/nucleo/avisos.js',
   'js/nucleo/graficos.js',
+  'js/modulos/tarefas.js',
+  'js/modulos/habitos.js',
   'js/telas/bloqueio.js',
   'js/telas/hoje.js',
   'js/telas/dinheiro.js',

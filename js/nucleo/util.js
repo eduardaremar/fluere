@@ -83,3 +83,48 @@ export const pref = {
     try { localStorage.setItem('fluere.' + chave, JSON.stringify(valor)); } catch { /* modo privado: ignora */ }
   },
 };
+
+/* ---------- semanas e durações (tarefas e hábitos) ---------- */
+
+/** "2026-10-27" + 3 → "2026-10-30" */
+export function somarDias(iso, n) {
+  const d = deIso(iso);
+  d.setDate(d.getDate() + n);
+  return isoDia(d);
+}
+
+/** Segunda-feira da semana do dia dado (a semana começa na segunda). */
+export function segundaDaSemana(iso = isoDia()) {
+  const d = deIso(iso);
+  const dow = (d.getDay() + 6) % 7; // 0 = segunda … 6 = domingo
+  d.setDate(d.getDate() - dow);
+  return isoDia(d);
+}
+
+/** Os 7 dias (segunda a domingo) da semana que começa em `segunda`. */
+export const diasDaSemana = (segunda) => Array.from({ length: 7 }, (_, i) => somarDias(segunda, i));
+
+export const NOMES_DIAS = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
+
+/** "2026-10-27" → "27/10" */
+export const diaMes = (iso) => { const [, m, d] = String(iso).split('-'); return `${d}/${m}`; };
+
+/** Minutos → "45 min", "1h", "2h30" */
+export function duracao(min) {
+  min = Math.round(Number(min) || 0);
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60), m = min % 60;
+  return m ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`;
+}
+
+/** Quantos dias tem o mês "2026-10". */
+export function diasNoMes(ym) {
+  const [a, m] = ym.split('-').map(Number);
+  return new Date(a, m, 0).getDate();
+}
+
+/** "2026-10" + 1 → "2026-11" */
+export function somarMeses(ym, n) {
+  const [a, m] = ym.split('-').map(Number);
+  return isoMes(new Date(a, m - 1 + n, 1));
+}

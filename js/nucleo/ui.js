@@ -80,6 +80,16 @@ export function confirmar({ titulo, texto, ok = 'Confirmar', perigo = false }) {
 /* ---------- montagem de telas ---------- */
 
 /**
+ * Troca a área da tela por uma cópia "limpa" (sem os cliques ligados antes).
+ * Use antes de redesenhar uma tela que liga eventos, para os cliques não contarem duas vezes.
+ */
+export function areaLimpa(el) {
+  const nova = el.cloneNode(false);
+  el.replaceWith(nova);
+  return nova;
+}
+
+/**
  * Cabeçalho padrão de uma tela, com os botões de avisos e de bloquear.
  *   cabecalho({ sup:'Finanças', titulo:'Dinheiro <em>do mês</em>', voltar:['#/mais','Mais'], avisos:2 })
  */

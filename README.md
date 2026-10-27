@@ -81,11 +81,11 @@ O painel **Hoje** avisa quando o último backup passou de 7 dias.
 | Etapa | O que | Situação |
 |---|---|---|
 | 0 | Fundação: visual, navegação, senha, criptografia, backup, instalação | ✅ pronta para validar |
-| 1 | Financeiro do consultório | próxima |
+| 1 | Financeiro do consultório | |
 | 2 | Gastos CPF/CNPJ e resumo geral (+ sincronização Mac/iPhone) | |
 | 3 | Pacientes | |
-| 4 | Tarefas e planejador da semana | |
-| 5 | Hábitos | |
+| 4 | Tarefas e planejador da semana | ✅ pronta para validar |
+| 5 | Hábitos | ✅ pronta para validar |
 | 6 | Metas do semestre | |
 | 7 | Conteúdo | |
 | 8 | Trabalhos paralelos (RT pousadas, Bela Flor) | |
@@ -133,3 +133,21 @@ Dê dois cliques em **Publicar Fluere.command**.
 
 **O que vai para o GitHub:** só o código, que fica público.
 **O que nunca vai:** seus dados, os backups e as ferramentas desta pasta.
+
+---
+
+## Tarefas e semana (Rotina → Semana)
+
+- **Criar uma tarefa:** "+ Novo" → Tarefa. Cada tarefa tem área, tempo estimado, dia para fazer e prazo (opcional). Marque como **Importante** para ela aparecer primeiro.
+- **Horas livres:** toque em "ajustar" no cartão de horas livres. A semana padrão vale para todas as semanas, e dá para ajustar só uma semana específica.
+- **A semana não fecha?** O aviso compara o tempo das tarefas com as horas livres e também aponta os dias que passaram do limite.
+- **Mudar o dia:** no Mac, arraste a tarefa para outro dia. No iPhone, toque na tarefa e mude o dia.
+- **Adiar, recusar, delegar:** toque na tarefa. O que for recusado ou delegado vai para o quadro "Fora da sua lista" e pode voltar quando você quiser.
+- **Copiar para o Claude:** copia a semana em texto (só as tarefas, nunca dados de pacientes) para você colar no chat e pedir uma reorganização.
+
+## Hábitos (Rotina → Hábitos)
+
+- **Marcar:** toque na bolinha do dia, no tracker ou no painel Hoje.
+- **Criar ou editar:** "Novo hábito", ou toque no nome do hábito. Ele pode ser **todo dia** ou **algumas vezes por semana**.
+- **Lembrete:** escolha um horário e o Fluere cria um evento que se repete no Calendário, com aviso na hora.
+- **Números do mês:** melhor sequência, % cumprida (respeitando a frequência de cada hábito) e descobertas automáticas, como "nos dias em que você faz X, Y acontece 2x mais". Tudo é calculado no próprio aparelho.

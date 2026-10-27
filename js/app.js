@@ -15,7 +15,7 @@ import * as dados from './nucleo/dados.js';
 import * as cofre from './nucleo/cofre.js';
 import * as avisos from './nucleo/avisos.js';
 import * as backup from './nucleo/backup.js';
-import { abrirFolha, fecharFolha, folhaAberta, toast, icone } from './nucleo/ui.js';
+import { abrirFolha, fecharFolha, folhaAberta, toast, icone, areaLimpa } from './nucleo/ui.js';
 import { pref, diasDesde } from './nucleo/util.js';
 import { pedirSenha } from './telas/bloqueio.js';
 import * as hoje from './telas/hoje.js';
@@ -23,6 +23,8 @@ import * as dinheiro from './telas/dinheiro.js';
 import * as pacientes from './telas/pacientes.js';
 import * as rotina from './telas/rotina.js';
 import * as mais from './telas/mais.js';
+import * as T from './modulos/tarefas.js';
+import * as H from './modulos/habitos.js';
 
 /* ---------- telas da barra de baixo (celular) ---------- */
 const TELAS = [
@@ -56,14 +58,12 @@ const MENU_LATERAL = [
 ];
 
 /* ---------- itens do botão "+ Novo" ---------- */
-// `etapa` indica quando cada atalho passa a funcionar. Quando um
-// módulo ficar pronto, coloque em `abrir` a função que abre o formulário dele.
+// Só aparecem os atalhos que já funcionam. Quando um módulo novo ficar
+// pronto, acrescente aqui um item com a função que abre o formulário dele.
+// Próximos: Atendimento, Gasto, Consulta feita, Ideia de conteúdo.
 const NOVOS = [
-  { nome: 'Atendimento', desc: 'Consulta ou pacote vendido', icone: icone.atendimento, etapa: 'Etapa 1' },
-  { nome: 'Gasto', desc: 'CPF ou CNPJ', icone: icone.gasto, etapa: 'Etapa 2' },
-  { nome: 'Consulta feita', desc: 'Atualiza o pacote do paciente', icone: icone.consulta, etapa: 'Etapa 3' },
-  { nome: 'Tarefa', desc: 'Com área, prazo e tempo', icone: icone.tarefa, etapa: 'Etapa 4' },
-  { nome: 'Ideia de conteúdo', desc: 'Caixinha de ideias rápidas', icone: icone.ideia, etapa: 'Etapa 7' },
+  { nome: 'Tarefa', desc: 'Com área, dia, prazo e tempo', icone: icone.tarefa, abrir: () => T.abrirTarefa() },
+  { nome: 'Hábito', desc: 'Todo dia ou algumas vezes por semana', icone: icone.revisao, abrir: () => H.abrirHabito() },
 ];
 
 const $ = (id) => document.getElementById(id);
@@ -105,8 +105,7 @@ function desenharMenus() {
 function desenharTela() {
   if (!cofre.estaAberto()) return;
   const { tela, partes } = rotaAtual();
-  const el = $('tela');
-  el.innerHTML = '';
+  const el = areaLimpa($('tela'));
   tela.modulo.desenhar(el, partes);
   desenharMenus();
 }
@@ -122,17 +121,15 @@ function aoMudarRota() {
 function abrirNovo() {
   const f = abrirFolha(`
     <h3>O que você quer <em>lançar?</em></h3>
-    <p class="sub">Os atalhos ficam ativos conforme cada módulo fica pronto.</p>
     <div class="lista">${NOVOS.map((n, i) => `
       <button class="item" data-i="${i}">
         <span class="ic">${n.icone(20)}</span>
         <span class="tx"><b>${n.nome}</b><small>${n.desc}</small></span>
-        ${n.abrir ? `<span class="seta">${icone.seta()}</span>` : `<span class="pill">${n.etapa}</span>`}
+        <span class="seta">${icone.seta()}</span>
       </button>`).join('')}</div>`);
   f.querySelectorAll('[data-i]').forEach((b) => b.addEventListener('click', () => {
-    const n = NOVOS[b.dataset.i];
-    if (n.abrir) { fecharFolha(); setTimeout(n.abrir, 260); }
-    else toast(`“${n.nome}” chega na ${n.etapa.toLowerCase()}.`);
+    fecharFolha();
+    setTimeout(NOVOS[b.dataset.i].abrir, 260);
   }));
 }
 
