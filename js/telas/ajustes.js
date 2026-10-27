@@ -1,0 +1,278 @@
+/* =========================================================
+   Fluere · Ajustes e backup
+   Aparência, segurança (senha, bloqueio, chave de
+   recuperação), backup/restauração e instalação no iPhone.
+   ========================================================= */
+
+import * as cofre from '../nucleo/cofre.js';
+import * as dados from '../nucleo/dados.js';
+import * as backup from '../nucleo/backup.js';
+import { abrirFolha, fecharFolha, confirmar, toast, icone, cabecalho } from '../nucleo/ui.js';
+import { pref, dataHora, diasDesde, esc } from '../nucleo/util.js';
+import { htmlChave, ligarBotoesChave } from './bloqueio.js';
+
+const TEMAS = [['auto', 'Automático'], ['claro', 'Claro'], ['escuro', 'Escuro']];
+const BLOQUEIO = [[1, '1 minuto'], [5, '5 minutos'], [15, '15 minutos'], [60, '1 hora'], [0, 'Nunca']];
+
+export function aplicarTema(tema) {
+  const raiz = document.documentElement;
+  if (tema === 'claro') raiz.dataset.theme = 'light';
+  else if (tema === 'escuro') raiz.dataset.theme = 'dark';
+  else delete raiz.dataset.theme;
+}
+
+const item = (acao, ic, titulo, desc, extra = icone.seta(), cls = '') => `
+  <button class="item ${cls}" data-acao="${acao}">
+    <span class="ic">${ic(20)}</span>
+    <span class="tx"><b>${titulo}</b>${desc ? `<small>${desc}</small>` : ''}</span>
+    <span class="seta">${extra}</span>
+  </button>`;
+
+export function desenhar(el) {
+  const tema = pref.ler('tema', 'auto');
+  const minutos = pref.ler('bloqueioMin', 5);
+  const ultimo = backup.ultimo();
+  const textoBackup = ultimo ? `Último: ${dataHora(ultimo)}${diasDesde(ultimo) >= 7 ? ' · já passou de 7 dias' : ''}` : 'Você ainda não fez nenhum backup';
+  const total = Object.entries(dados.contagem()).filter(([c]) => c !== 'config').reduce((s, [, n]) => s + n, 0);
+
+  el.innerHTML = `
+    ${cabecalho({ voltar: ['#/mais', 'Mais'], titulo: 'Ajustes <em>e backup</em>' })}
+
+    <section>
+      <h2>Aparência</h2>
+      <div class="card">
+        <div class="fld" style="margin:0"><span class="l" id="l-tema">Modo de cor</span>
+          <div class="seg" role="group" aria-labelledby="l-tema">${TEMAS.map(([v, n]) =>
+            `<button type="button" data-tema="${v}" aria-pressed="${tema === v}">${n}</button>`).join('')}</div>
+          <small>“Automático” segue o modo claro/escuro do seu iPhone ou Mac.</small>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Backup</h2>
+      <div class="lista">
+        ${item('backup', icone.nuvem, 'Fazer backup agora', esc(textoBackup))}
+        ${item('restaurar', icone.restaurar, 'Restaurar um backup', 'Substitui os dados deste aparelho')}
+      </div>
+      <input type="file" id="arquivo-backup" accept=".fluere,application/json" hidden>
+    </section>
+
+    <section>
+      <h2>Segurança</h2>
+      <div class="lista">
+        ${item('bloquear', icone.cadeado, 'Bloquear agora', 'Pede a senha de novo')}
+        <label class="item" for="sel-bloqueio">
+          <span class="ic">${icone.cadeado(20)}</span>
+          <span class="tx"><b>Bloquear sozinho</b><small>Depois de sair do app por</small></span>
+          <select id="sel-bloqueio" style="border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:8px;font-size:15px">
+            ${BLOQUEIO.map(([v, n]) => `<option value="${v}" ${v === minutos ? 'selected' : ''}>${n}</option>`).join('')}
+          </select>
+        </label>
+        ${item('senha', icone.chave, 'Trocar senha', '')}
+        ${item('chave', icone.chave, 'Nova chave de recuperação', 'A chave antiga deixa de funcionar')}
+      </div>
+    </section>
+
+    <section>
+      <h2>Aparelhos</h2>
+      <div class="lista">
+        ${item('instalar', icone.celular, 'Instalar no iPhone', 'Ícone na tela de início, funciona sem internet')}
+        ${item('sobre', icone.cadeado, 'Onde ficam os meus dados', `${total} ${total === 1 ? 'item guardado' : 'itens guardados'} neste aparelho`)}
+      </div>
+    </section>
+
+    <section>
+      <h2>Zona de cuidado</h2>
+      <div class="lista">
+        ${item('apagar', icone.lixo, 'Apagar os dados deste aparelho', 'Não tem volta. Faça um backup antes.', icone.seta(), 'perigo')}
+      </div>
+    </section>`;
+
+  /* aparência */
+  el.querySelectorAll('[data-tema]').forEach((b) => b.addEventListener('click', () => {
+    pref.gravar('tema', b.dataset.tema);
+    aplicarTema(b.dataset.tema);
+    desenhar(el);
+  }));
+
+  /* bloqueio automático */
+  el.querySelector('#sel-bloqueio').addEventListener('change', (e) => {
+    pref.gravar('bloqueioMin', Number(e.target.value));
+    toast('Pronto, ajuste salvo.');
+  });
+
+  /* arquivo de restauração */
+  el.querySelector('#arquivo-backup').addEventListener('change', async (e) => {
+    const arq = e.target.files[0];
+    e.target.value = '';
+    if (arq) folhaRestaurar(arq, el);
+  });
+
+  /* botões da lista */
+  el.querySelectorAll('[data-acao]').forEach((b) => b.addEventListener('click', () => {
+    const acao = b.dataset.acao;
+    if (acao === 'backup') fazerBackup(el);
+    else if (acao === 'restaurar') el.querySelector('#arquivo-backup').click();
+    else if (acao === 'bloquear') window.dispatchEvent(new Event('fluere:bloquear'));
+    else if (acao === 'senha') folhaTrocarSenha();
+    else if (acao === 'chave') folhaNovaChave();
+    else if (acao === 'instalar') folhaInstalar();
+    else if (acao === 'sobre') folhaSobre();
+    else if (acao === 'apagar') folhaApagar();
+  }));
+}
+
+/* ---------- backup ---------- */
+
+async function fazerBackup(el) {
+  try {
+    if (await backup.fazer()) {
+      toast('Backup gerado. Guarde o arquivo no iCloud Drive.');
+      desenhar(el);
+    }
+  } catch (e) {
+    console.error(e);
+    toast('Não consegui gerar o backup.');
+  }
+}
+
+async function folhaRestaurar(arquivo, el) {
+  let conteudo;
+  try { conteudo = await backup.lerArquivo(arquivo); } catch (e) { toast(e.message); return; }
+  const f = abrirFolha(`
+    <h3>Restaurar backup</h3>
+    <p class="sub">Backup de <b>${dataHora(conteudo.criadoEm)}</b>. Os dados atuais deste aparelho serão <b>substituídos</b> pelos do backup.</p>
+    <form id="f-rest" novalidate>
+      <div class="fld"><label for="r-senha">Senha que você usava quando fez esse backup</label>
+        <input id="r-senha" type="password" autocomplete="off">
+        <small>Se não lembrar, use a chave de recuperação daquela época no lugar da senha.</small></div>
+      <div class="erro" id="r-erro" role="alert"></div>
+      <div class="acts">
+        <button type="button" class="btn sec" data-fechar>Cancelar</button>
+        <button type="submit" class="btn pri">Restaurar</button>
+      </div>
+    </form>`);
+  f.querySelector('[data-fechar]').onclick = fecharFolha;
+  f.querySelector('#f-rest').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const valor = f.querySelector('#r-senha').value;
+    const botao = f.querySelector('button[type=submit]');
+    botao.disabled = true; botao.textContent = 'Restaurando…';
+    try {
+      // Tenta como senha; se não der, tenta como chave de recuperação.
+      let n;
+      try { n = await backup.restaurar(conteudo, { senha: valor }); }
+      catch { n = await backup.restaurar(conteudo, { chaveRec: valor }); }
+      fecharFolha();
+      toast(`Backup restaurado: ${n} ${n === 1 ? 'item' : 'itens'}.`);
+      desenhar(el);
+    } catch (e) {
+      botao.disabled = false; botao.textContent = 'Restaurar';
+      f.querySelector('#r-erro').textContent = e.message;
+    }
+  };
+}
+
+/* ---------- senha e chave ---------- */
+
+function folhaTrocarSenha() {
+  const f = abrirFolha(`
+    <h3>Trocar senha</h3>
+    <form id="f-senha" novalidate>
+      <div class="fld"><label for="t-atual">Senha atual</label><input id="t-atual" type="password" autocomplete="current-password"></div>
+      <div class="fld"><label for="t-nova">Senha nova</label><input id="t-nova" type="password" autocomplete="new-password"><small>Pelo menos 8 caracteres.</small></div>
+      <div class="fld"><label for="t-nova2">Repita a senha nova</label><input id="t-nova2" type="password" autocomplete="new-password"></div>
+      <div class="erro" id="t-erro" role="alert"></div>
+      <div class="acts"><button type="button" class="btn sec" data-fechar>Cancelar</button><button type="submit" class="btn pri">Trocar</button></div>
+    </form>`);
+  f.querySelector('[data-fechar]').onclick = fecharFolha;
+  f.querySelector('#f-senha').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const erro = f.querySelector('#t-erro');
+    const atual = f.querySelector('#t-atual').value, nova = f.querySelector('#t-nova').value, nova2 = f.querySelector('#t-nova2').value;
+    if (nova.length < 8) { erro.textContent = 'A senha nova precisa ter pelo menos 8 caracteres.'; return; }
+    if (nova !== nova2) { erro.textContent = 'As duas senhas novas não estão iguais.'; return; }
+    if (!(await cofre.trocarSenha(atual, nova))) { erro.textContent = 'A senha atual está incorreta.'; return; }
+    fecharFolha();
+    toast('Senha trocada. Backups antigos continuam abrindo com a senha antiga.');
+  };
+}
+
+function folhaNovaChave() {
+  const f = abrirFolha(`
+    <h3>Nova chave de recuperação</h3>
+    <p class="sub">A chave antiga deixa de abrir este aparelho. Backups antigos continuam abrindo com a chave antiga.</p>
+    <form id="f-chave" novalidate>
+      <div class="fld"><label for="k-senha">Confirme com a sua senha</label><input id="k-senha" type="password" autocomplete="current-password"></div>
+      <div class="erro" id="k-erro" role="alert"></div>
+      <div class="acts"><button type="button" class="btn sec" data-fechar>Cancelar</button><button type="submit" class="btn pri">Gerar</button></div>
+    </form>`);
+  f.querySelector('[data-fechar]').onclick = fecharFolha;
+  f.querySelector('#f-chave').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const chave = await cofre.novaChaveRecuperacao(f.querySelector('#k-senha').value);
+    if (!chave) { f.querySelector('#k-erro').textContent = 'Senha incorreta.'; return; }
+    const g = abrirFolha(`
+      <h3>Sua nova chave</h3>
+      <p class="sub">Guarde no app Senhas do iPhone e num papel. Ela aparece só agora.</p>
+      ${htmlChave(chave)}
+      <div class="acts" style="margin-top:10px"><button type="button" class="btn pri" data-fechar>Guardei</button></div>`);
+    ligarBotoesChave(chave, toast);
+    g.querySelector('[data-fechar]').onclick = fecharFolha;
+  };
+}
+
+/* ---------- informações ---------- */
+
+function folhaInstalar() {
+  const f = abrirFolha(`
+    <h3>Instalar no iPhone</h3>
+    <div class="texto">
+      <p>1. Abra o endereço do Fluere no <b>Safari</b> do iPhone.</p>
+      <p>2. Toque no botão <b>Compartilhar</b> (o quadrado com a seta para cima).</p>
+      <p>3. Escolha <b>Adicionar à Tela de Início</b> e toque em <b>Adicionar</b>.</p>
+      <p>Pronto: o Fluere aparece como um app, abre em tela cheia e funciona sem internet.</p>
+      <p style="color:var(--soft);font-size:13.5px">Importante: o app instalado guarda os dados separados do Safari. Use sempre o ícone da tela de início.</p>
+    </div>
+    <div class="acts"><button type="button" class="btn pri" data-fechar>Entendi</button></div>`);
+  f.querySelector('[data-fechar]').onclick = fecharFolha;
+}
+
+function folhaSobre() {
+  const cont = dados.contagem();
+  const linhas = Object.entries(cont).map(([c, n]) => `<li>${esc(c)}: ${n}</li>`).join('') || '<li>Nenhum item guardado ainda.</li>';
+  const f = abrirFolha(`
+    <h3>Onde ficam os meus dados</h3>
+    <div class="texto">
+      <p><b>Neste aparelho</b>, dentro do navegador, embaralhados com a sua senha. Sem a senha ou a chave de recuperação, ninguém lê.</p>
+      <p><b>Nada é enviado para a internet.</b> Quando ligarmos a sincronização (depois da Etapa 2), os dados vão para a nuvem já embaralhados.</p>
+      <p><b>Backup:</b> o arquivo .fluere também vai embaralhado. Guarde no iCloud Drive.</p>
+      <p>O que está guardado agora:</p>
+      <ul>${linhas}</ul>
+    </div>
+    <div class="acts"><button type="button" class="btn pri" data-fechar>Fechar</button></div>`);
+  f.querySelector('[data-fechar]').onclick = fecharFolha;
+}
+
+/* ---------- apagar ---------- */
+
+function folhaApagar() {
+  const f = abrirFolha(`
+    <h3>Apagar os dados deste aparelho</h3>
+    <p class="sub">Isso apaga a senha e <b>todos</b> os dados guardados neste aparelho. Só dá para recuperar com um arquivo de backup.</p>
+    <form id="f-apagar" novalidate>
+      <div class="fld"><label for="a-conf">Para confirmar, escreva APAGAR</label><input id="a-conf" type="text" autocomplete="off" autocapitalize="characters"></div>
+      <div class="acts"><button type="button" class="btn sec" data-fechar>Cancelar</button><button type="submit" class="btn perigo">Apagar tudo</button></div>
+    </form>`);
+  f.querySelector('[data-fechar]').onclick = fecharFolha;
+  f.querySelector('#f-apagar').onsubmit = async (ev) => {
+    ev.preventDefault();
+    if (f.querySelector('#a-conf').value.trim().toUpperCase() !== 'APAGAR') { toast('Escreva APAGAR para confirmar.'); return; }
+    fecharFolha();
+    if (!(await confirmar({ titulo: 'Última confirmação', texto: 'Apagar tudo deste aparelho agora?', ok: 'Apagar', perigo: true }))) return;
+    await cofre.apagarAparelho();
+    pref.gravar('ultimoBackup', null);
+    location.reload();
+  };
+}
