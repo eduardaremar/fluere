@@ -35,7 +35,7 @@ const redesenhar = () => ultimo && desenhar(ultimo.el, ultimo.partes);
 
 const curto = (v) => (Math.abs(v) >= 1000 ? brl(Math.round(v)).replace(/,00$/, '') : brl(v).replace(/,00$/, ''));
 const AVISOS_DAQUI = ['visita-', 'doc-', 'receb-', 'relat-', 'peca-'];
-const pendencias = () => avisos.todos().filter((a) => AVISOS_DAQUI.some((p) => a.id.startsWith(p)));
+const pendencias = () => avisos.todos().filter((a) => AVISOS_DAQUI.some((p) => a.id.startsWith(p)) && (!a.id.startsWith('peca-') || a.texto.startsWith('Bela Flor')));
 
 const lista = (itens) => `<ul class="alerts">${itens.map((a) => `<li>${a.irPara
   ? `<button type="button" class="alert ${a.tipo || ''}" data-ir="${a.irPara}"><span class="d"></span><div>${a.texto}</div></button>`

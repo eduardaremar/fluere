@@ -12,6 +12,7 @@ import * as T from '../modulos/tarefas.js';
 import * as H from '../modulos/habitos.js';
 import * as P from '../modulos/pacientes.js';
 import * as C from '../modulos/consultorio.js';
+import * as Pe from '../modulos/pecas.js';
 
 const NOME = 'Eduarda';
 
@@ -25,6 +26,7 @@ export function desenhar(el) {
   const feitas = doDia.filter((t) => t.status === 'feita').length;
   const restante = doDia.filter((t) => t.status === 'aberta').reduce((s, t) => s + (Number(t.tempo) || 0), 0);
   const consultas = P.doDia(hoje);
+  const pecasHoje = Pe.todas('propria').filter((p) => (p.postadoEm || p.data) === hoje);
   const est = H.estatisticas(isoMes());
   const habitos = est.porHabito;
 
@@ -77,8 +79,15 @@ export function desenhar(el) {
           ? `<div class="hab-hoje">${habitos.map(({ h, hoje: feito }) => `
               <button data-marcar="${h.id}" aria-pressed="${feito}" style="--c:${H.cor(h)}"><span class="bola">${feito ? icone.check(14) : ''}</span><span>${esc(h.nome)}</span></button>`).join('')}</div>`
           : '<div class="vazio">Nenhum hábito criado.</div>' })}
-      ${painel({ rot: 'Conteúdo', titulo: 'Peça do dia',
-        corpo: '<div class="vazio">A peça programada para hoje aparece aqui quando o módulo de conteúdo ficar pronto.</div>' })}
+      ${painel({ rot: 'Conteúdo', titulo: 'Peça do dia', ver: ['#/mais/conteudo', 'Conteúdo'],
+        corpo: pecasHoje.length
+          ? `<div class="linhas">${pecasHoje.map((p) => `
+              <div class="linha">
+                <button class="tx" data-peca="${p.id}" style="text-align:left"><b>${esc(p.titulo)}</b><small>${Pe.formato(p.formato).nome}${p.pilar ? ` · ${esc(Pe.nomePilar(p.pilar))}` : ''}</small></button>
+                <span class="chip ${Pe.postada(p) ? 'pos' : 'acc'}">${esc(Pe.nomeEtapa(p))}</span>
+                ${Pe.postada(p) ? '' : `<button class="chip" data-avancar-peca="${p.id}">avançar</button>`}
+              </div>`).join('')}</div>`
+          : '<div class="vazio">Nenhuma peça programada para hoje.</div>' })}
     </div>`;
 
   el.addEventListener('click', async (e) => {
@@ -89,6 +98,8 @@ export function desenhar(el) {
     else if (b.dataset.editar) T.abrirTarefa(tarefa(b.dataset.editar));
     else if (b.dataset.ficha) P.abrirFicha(b.dataset.ficha);
     else if (b.dataset.consultaFeita) P.abrirConsultaFeita(b.dataset.consultaFeita);
+    else if (b.dataset.peca) Pe.abrirPeca(Pe.todas('propria').find((p) => p.id === b.dataset.peca));
+    else if (b.dataset.avancarPeca) await Pe.avancar(Pe.todas('propria').find((p) => p.id === b.dataset.avancarPeca));
     else if (b.dataset.marcar) await H.alternar(H.lista().find((h) => h.id === b.dataset.marcar), hoje);
   });
 }

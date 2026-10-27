@@ -30,7 +30,7 @@ import * as C from './modulos/consultorio.js';
 import * as S from './modulos/gastos.js';
 import * as P from './modulos/pacientes.js';
 import './modulos/trabalhos.js';
-import './modulos/pecas.js';
+import * as Pe from './modulos/pecas.js';
 
 /* ---------- telas da barra de baixo (celular) ---------- */
 const TELAS = [
@@ -66,11 +66,11 @@ const MENU_LATERAL = [
 /* ---------- itens do botão "+ Novo" ---------- */
 // Só aparecem os atalhos que já funcionam. Quando um módulo novo ficar
 // pronto, acrescente aqui um item com a função que abre o formulário dele.
-// Próximo: Ideia de conteúdo.
 const NOVOS = [
   { nome: 'Atendimento', desc: 'Consulta ou acompanhamento vendido', icone: icone.atendimento, abrir: () => C.abrirAtendimento() },
   { nome: 'Consulta feita', desc: 'Atualiza o pacote do paciente', icone: icone.consulta, abrir: () => P.abrirConsultaFeita() },
   { nome: 'Paciente', desc: 'Nova ficha de cadastro', icone: icone.pacientes, abrir: () => P.abrirPaciente() },
+  { nome: 'Ideia de conteúdo', desc: 'Captura rápida para a caixinha', icone: icone.ideia, abrir: () => Pe.abrirIdeia() },
   { nome: 'Gasto', desc: 'CPF ou CNPJ, à vista ou parcelado', icone: icone.gasto, abrir: () => S.abrirGasto() },
   { nome: 'Tarefa', desc: 'Com área, dia, prazo e tempo', icone: icone.tarefa, abrir: () => T.abrirTarefa() },
   { nome: 'Hábito', desc: 'Todo dia ou algumas vezes por semana', icone: icone.revisao, abrir: () => H.abrirHabito() },

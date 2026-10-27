@@ -87,7 +87,7 @@ O painel **Hoje** avisa quando o último backup passou de 7 dias.
 | 4 | Tarefas e planejador da semana | ✅ aprovada |
 | 5 | Hábitos | ✅ aprovada |
 | 6 | Metas do semestre | |
-| 7 | Conteúdo | |
+| 7 | Conteúdo | ✅ pronto para validar |
 | 8 | Trabalhos paralelos | ✅ pronto para validar |
 | 9 | Estudos | |
 | 10 | Vencimentos e documentos | |
@@ -208,3 +208,14 @@ Duas frentes fora do consultório, em três abas: **Visão geral**, **RT pousada
   - As tarefas de RT são as do módulo Tarefas, na área "RT pousadas".
 - **Bela Flor:** tarefas e entregas com prazo (também da área "Bela Flor" do módulo Tarefas), posts com etapas (Reels: ideia → roteiro → gravado → editado → postado; carrossel: ideia → texto → design → postado; stories: ideia → planejado → postado), avisos de post atrasado e **relatório mensal** (lembrete a partir do dia 25 e nos primeiros 10 dias do mês seguinte).
 - Os avisos de tudo isso aparecem no painel Hoje.
+
+## Conteúdo (Mais → Conteúdo)
+
+O Fluere **não gera ideias**: serve para **executar e medir**. O planejamento e a estrutura dos posts você faz no seu outro projeto. Três abas: **Semana**, **Ideias** e **Métricas**.
+
+- **Semana:** quatro cartões com a meta da semana (2 no feed, 1 Reels teste, 2 dias de stories) e o calendário de segunda a domingo. Cada peça mostra formato e etapa; a setinha avança a etapa e a última é "postado". Toque em "+" num dia para criar uma peça nele. Mais abaixo, a fila "Em produção" e a divisão entre os pilares (emagrecimento feminino e saúde intestinal) do que você postou na semana.
+- **Peça:** tema, formato (Reels, Reels teste, carrossel, stories, TikTok), etapa, pilar, objetivo (atrair, conectar ou vender), data programada, link de referência e anotação.
+- **Etapas por formato:** Reels e Reels teste: ideia → roteiro → gravado → editado → postado. Carrossel: ideia → texto → design → postado. Stories: ideia → planejado → postado. TikTok: ideia → gravado → postado. Dá para editar tudo em "Metas e etapas", junto com os números da meta semanal.
+- **Ideias:** caixinha de captura rápida (também em "+ Novo → Ideia de conteúdo"). "Virar peça" abre a peça já com o tema, o pilar e o link, e a ideia sai da caixinha.
+- **Métricas:** cerca de 7 dias depois de postar, o Fluere pede alcance, curtidas, comentários, salvamentos, compartilhamentos e seguidores ganhos (stories ficam de fora). A aba mostra os totais dos últimos 30 dias, o alcance médio por formato e o ranking "o que mais funcionou".
+- **Avisos no Hoje:** peça programada para hoje ou atrasada, métricas pendentes e, a partir da sexta, o que ainda falta da meta da semana. O painel Hoje mostra a "peça do dia", com botão para avançar.

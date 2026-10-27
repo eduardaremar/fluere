@@ -9,17 +9,13 @@ import * as G from '../nucleo/graficos.js';
 import { cabecalho, painel, kpi, icone } from '../nucleo/ui.js';
 import * as ajustes from './ajustes.js';
 import * as trabalhosTela from './trabalhos.js';
+import * as conteudoTela from './conteudo.js';
+import * as Pe from '../modulos/pecas.js';
+import { segundaDaSemana } from '../nucleo/util.js';
 import * as W from '../modulos/trabalhos.js';
 
-/* Metas e valores que já combinamos na entrevista (não são exemplos) */
-const META_CONTEUDO = [
-  { nome: 'Feed', total: 2 },
-  { nome: 'Reels teste', total: 1 },
-  { nome: 'Stories', total: 2 },
-];
-
 const PARTES = [
-  { rota: 'conteudo', nome: 'Conteúdo', desc: '@nutrieduardaremar', icone: icone.conteudo, chips: () => META_CONTEUDO.map((m) => `<span class="chip">${m.nome} 0/${m.total}</span>`).join(''), desenhar: conteudo },
+  { rota: 'conteudo', nome: 'Conteúdo', desc: '@nutrieduardaremar', icone: icone.conteudo, chips: () => { const s = Pe.semana(segundaDaSemana()); return `<span class="chip">Feed ${s.feed.feitos}/${s.meta.feed}</span><span class="chip">Teste ${s.teste.feitos}/${s.meta.reelsteste}</span><span class="chip">Stories ${s.stories.feitos}/${s.meta.stories}</span>`; }, tela: conteudoTela },
   { rota: 'trabalhos', nome: 'Trabalhos', desc: 'RT pousadas · Bela Flor', icone: icone.trabalho, chips: () => `<span class="chip">${plural(W.pousadas().length, 'pousada', 'pousadas')}</span><span class="chip">visitas ${W.config().diaVisita === 6 ? 'aos sábados' : `às ${W.NOME_DIA[W.config().diaVisita]}s`}</span>`, tela: trabalhosTela },
   { rota: 'estudos', nome: 'Estudos', desc: 'Cursos, artigos, livros e temas', icone: icone.estudos, chips: () => '<span class="chip">0 estudando</span>', desenhar: estudos },
   { rota: 'vencimentos', nome: 'Vencimentos', desc: 'CRN, certificado, CNH, IPVA…', icone: icone.vencimentos, chips: () => '<span class="chip">nada cadastrado</span>', desenhar: vencimentos },
@@ -44,26 +40,6 @@ export function desenhar(el, [sub, ...resto]) {
         <b>${p.nome}</b><small>${p.desc}</small>
         <span class="rodape chips">${p.chips()}</span>
       </a>`).join('')}</div>`;
-}
-
-/* ---------- conteúdo ---------- */
-function conteudo() {
-  const dias = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
-  return `
-    <div class="grade g-kpi">
-      ${META_CONTEUDO.map((m) => kpi({ rot: `Meta · ${m.nome}`, valor: `0<span style="font-size:.5em;color:var(--soft)"> / ${m.total}</span>`, sub: 'nesta semana', classe: 'quente', extra: G.trilho(0, 'var(--g2)') })).join('')}
-      ${kpi({ rot: 'Seguidores no mês', valor: '0', sub: 'métricas digitadas', classe: 'rosa' })}
-    </div>
-    ${painel({ rot: 'Calendário', titulo: 'Sua <em>semana</em>',
-      corpo: `<div class="grade" style="grid-template-columns:repeat(7,minmax(90px,1fr));overflow-x:auto">${dias.map((d) => `
-        <div style="display:flex;flex-direction:column;gap:8px;min-width:90px"><div class="rot">${d}</div>
-          <div style="border:1px dashed var(--line);border-radius:14px;min-height:90px"></div></div>`).join('')}</div>` })}
-    <div class="grade g-2">
-      ${painel({ rot: 'Pilares', titulo: 'O que você está postando',
-        corpo: `<div class="rosca-bloco">${G.rosca([], { centro: '0', sub: 'peças' })}<div class="legenda"><div><i style="background:var(--g4)"></i><span>Saúde intestinal</span><span class="p">0%</span></div><div><i style="background:var(--g2)"></i><span>Emagrecimento feminino</span><span class="p">0%</span></div></div></div>` })}
-      ${painel({ rot: 'Métricas', titulo: 'O que mais funcionou',
-        corpo: '<div class="vazio">As métricas das peças postadas aparecem aqui.</div>' })}
-    </div>`;
 }
 
 /* ---------- estudos ---------- */
