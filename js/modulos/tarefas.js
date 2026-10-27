@@ -111,11 +111,12 @@ function grupo(el, aoMudar) {
  * Abre a folha para criar ou editar uma tarefa.
  *   abrirTarefa()                      → nova, para hoje
  *   abrirTarefa(null, { dia: iso })    → nova, num dia
+ *   abrirTarefa(null, { area: 'rt' })  → nova, já numa área
  *   abrirTarefa(tarefa)                → editar
  */
-export function abrirTarefa(tarefa = null, { dia } = {}) {
+export function abrirTarefa(tarefa = null, { dia, area } = {}) {
   const nova = !tarefa;
-  const t = tarefa ? { ...tarefa } : { titulo: '', area: 'consultorio', dia: dia === undefined ? isoDia() : dia, prazo: '', tempo: 30, importante: false, nota: '', status: 'aberta' };
+  const t = tarefa ? { ...tarefa } : { titulo: '', area: area || 'consultorio', dia: dia === undefined ? isoDia() : dia, prazo: '', tempo: 30, importante: false, nota: '', status: 'aberta' };
   const tempoOutro = TEMPOS.includes(Number(t.tempo)) ? '' : t.tempo;
 
   const f = abrirFolha(`

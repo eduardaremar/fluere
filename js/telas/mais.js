@@ -7,8 +7,9 @@
 
 import * as G from '../nucleo/graficos.js';
 import { cabecalho, painel, kpi, icone } from '../nucleo/ui.js';
-import { brl } from '../nucleo/util.js';
 import * as ajustes from './ajustes.js';
+import * as trabalhosTela from './trabalhos.js';
+import * as W from '../modulos/trabalhos.js';
 
 /* Metas e valores que já combinamos na entrevista (não são exemplos) */
 const META_CONTEUDO = [
@@ -19,16 +20,18 @@ const META_CONTEUDO = [
 
 const PARTES = [
   { rota: 'conteudo', nome: 'Conteúdo', desc: '@nutrieduardaremar', icone: icone.conteudo, chips: () => META_CONTEUDO.map((m) => `<span class="chip">${m.nome} 0/${m.total}</span>`).join(''), desenhar: conteudo },
-  { rota: 'trabalhos', nome: 'Trabalhos', desc: 'RT pousadas · Bela Flor', icone: icone.trabalho, chips: () => '<span class="chip">visitas às sextas</span>', desenhar: trabalhos },
+  { rota: 'trabalhos', nome: 'Trabalhos', desc: 'RT pousadas · Bela Flor', icone: icone.trabalho, chips: () => `<span class="chip">${plural(W.pousadas().length, 'pousada', 'pousadas')}</span><span class="chip">visitas ${W.config().diaVisita === 6 ? 'aos sábados' : `às ${W.NOME_DIA[W.config().diaVisita]}s`}</span>`, tela: trabalhosTela },
   { rota: 'estudos', nome: 'Estudos', desc: 'Cursos, artigos, livros e temas', icone: icone.estudos, chips: () => '<span class="chip">0 estudando</span>', desenhar: estudos },
   { rota: 'vencimentos', nome: 'Vencimentos', desc: 'CRN, certificado, CNH, IPVA…', icone: icone.vencimentos, chips: () => '<span class="chip">nada cadastrado</span>', desenhar: vencimentos },
   { rota: 'revisao', nome: 'Revisão semanal', desc: 'Domingo, 10 minutos', icone: icone.revisao, chips: () => '<span class="chip">próxima: domingo</span>', desenhar: revisao },
   { rota: 'ajustes', nome: 'Ajustes e backup', desc: 'Senha, aparência, backup', icone: icone.ajustes, chips: () => '', tela: ajustes },
 ];
 
-export function desenhar(el, [sub]) {
+const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+
+export function desenhar(el, [sub, ...resto]) {
   const parte = PARTES.find((p) => p.rota === sub);
-  if (parte?.tela) return parte.tela.desenhar(el);
+  if (parte?.tela) return parte.tela.desenhar(el, resto);
   if (parte) {
     el.innerHTML = `${cabecalho({ voltar: ['#/mais', 'Mais'], titulo: parte.nome })}${parte.desenhar()}`;
     return;
@@ -60,23 +63,6 @@ function conteudo() {
         corpo: `<div class="rosca-bloco">${G.rosca([], { centro: '0', sub: 'peças' })}<div class="legenda"><div><i style="background:var(--g4)"></i><span>Saúde intestinal</span><span class="p">0%</span></div><div><i style="background:var(--g2)"></i><span>Emagrecimento feminino</span><span class="p">0%</span></div></div></div>` })}
       ${painel({ rot: 'Métricas', titulo: 'O que mais funcionou',
         corpo: '<div class="vazio">As métricas das peças postadas aparecem aqui.</div>' })}
-    </div>`;
-}
-
-/* ---------- trabalhos ---------- */
-function trabalhos() {
-  return `
-    <div class="grade g-kpi">
-      ${kpi({ rot: 'RT pousadas', valor: brl(0), sub: 'recebido no mês', classe: 'verde' })}
-      ${kpi({ rot: 'Bela Flor', valor: brl(0), sub: 'recebido no mês', classe: 'quente' })}
-      ${kpi({ rot: 'Próxima visita', valor: 'sex', sub: 'as duas pousadas' })}
-      ${kpi({ rot: 'Documentos', valor: 0, sub: 'com validade', classe: 'rosa' })}
-    </div>
-    <div class="grade g-2">
-      ${painel({ rot: 'RT · RDC 216', titulo: 'Pousadas',
-        corpo: '<div class="vazio">Visitas, checklist e documentos das pousadas aparecem aqui.</div>' })}
-      ${painel({ rot: 'Marketing', titulo: 'Bela <em>Flor</em>',
-        corpo: '<div class="vazio">Tarefas, posts e o relatório do mês aparecem aqui.</div>' })}
     </div>`;
 }
 

@@ -29,6 +29,8 @@ import * as H from './modulos/habitos.js';
 import * as C from './modulos/consultorio.js';
 import * as S from './modulos/gastos.js';
 import * as P from './modulos/pacientes.js';
+import './modulos/trabalhos.js';
+import './modulos/pecas.js';
 
 /* ---------- telas da barra de baixo (celular) ---------- */
 const TELAS = [

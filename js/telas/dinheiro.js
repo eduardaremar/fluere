@@ -11,6 +11,7 @@ import { cabecalho, painel, kpi, abas, icone, areaLimpa } from '../nucleo/ui.js'
 import { brl, r2, esc, normal, isoMes, mesPorExtenso, somarMeses, diaPorExtenso, deIso } from '../nucleo/util.js';
 import * as C from '../modulos/consultorio.js';
 import * as S from '../modulos/gastos.js';
+import * as W from '../modulos/trabalhos.js';
 
 const PARTES = [
   { rota: 'consultorio', nome: 'Consultório', desenhar: consultorio, ligar: ligarConsultorio },
@@ -296,17 +297,18 @@ function ligarGastos(el) {
 
 /* =========================================================
    RESUMO GERAL (entrou · saiu · sobrou)
-   Entrou = líquido do consultório (+ trabalhos paralelos, numa próxima etapa).
+   Entrou = líquido do consultório + trabalhos paralelos já recebidos (RT e Bela Flor).
    Saiu   = gastos CPF e CNPJ + contas fixas pessoais. Os custos fixos do
             consultório já estão descontados no líquido, então não entram de novo.
    ========================================================= */
 function resumo() {
   const ym = estado.mes;
   const c = C.calcular(ym), s = S.calcular(ym), cfg = S.config();
-  const entrou = c.liquido, saiu = s.total, sobrou = r2(entrou - saiu);
+  const w = W.entradas(ym);
+  const entrou = r2(c.liquido + w.recebido), saiu = s.total, sobrou = r2(entrou - saiu);
   const meses = Array.from({ length: 6 }, (_, i) => somarMeses(ym, i - 5));
   const barras = meses.map((m) => {
-    const v = r2(C.calcular(m).liquido - S.calcular(m).total);
+    const v = r2(C.calcular(m).liquido + W.entradas(m).recebido - S.calcular(m).total);
     return { rotulo: mesPorExtenso(m).slice(0, 3).toLowerCase(), valor: Math.max(0, v), on: m === ym, dica: brl(v) };
   });
   const cores = s.categorias.map((x, i) => ({ ...x, cor: G.CORES[i % G.CORES.length] }));
@@ -314,7 +316,7 @@ function resumo() {
   const dicas = S.dicas(ym);
   return `
     <div class="grade g-3">
-      ${kpi({ rot: 'Entrou', valor: curto(entrou), sub: 'líquido do consultório' })}
+      ${kpi({ rot: 'Entrou', valor: curto(entrou), sub: w.recebido ? 'consultório + trabalhos' : 'líquido do consultório' })}
       ${kpi({ rot: 'Saiu', valor: curto(saiu), sub: 'CPF + CNPJ' })}
       ${kpi({ rot: 'Sobrou', valor: curto(sobrou), sub: cfg.metaSobra ? `meta de ${brl(cfg.metaSobra)} · ${sobrou >= cfg.metaSobra ? 'batida ✦' : `faltam ${brl(cfg.metaSobra - sobrou)}`}` : '<button class="link-mini" data-cfg-g>definir meta de sobra</button>', extra: metaPct == null ? '' : G.trilho(metaPct, metaPct >= 100 ? 'var(--g4)' : 'var(--g1)'), classe: 'verde' })}
     </div>
@@ -325,8 +327,7 @@ function resumo() {
       ${painel({ rot: 'Quanto sobrou por mês', titulo: 'Últimos 6 <em>meses</em>', corpo: G.barras(barras, { altura: 150 }) })}
     </div>
     ${painel({ rot: 'De onde entrou', titulo: 'Entradas',
-      corpo: `<div class="legenda"><div><i style="background:var(--g1)"></i><span>Consultório (líquido)</span><span class="p">${brl(entrou)}</span></div>
-        <div><i style="background:var(--g3)"></i><span>Marketing Bela Flor</span><span class="p">entra com o módulo de trabalhos</span></div>
-        <div><i style="background:var(--g5)"></i><span>RT pousadas</span><span class="p">entra com o módulo de trabalhos</span></div></div>` })}
+      corpo: `<div class="legenda"><div><i style="background:var(--g1)"></i><span>Consultório (líquido)</span><span class="p">${brl(c.liquido)}</span></div>
+        ${w.linhas.map((l) => `<div><i style="background:${l.cor}"></i><span>${l.nome}</span><span class="p">${l.recebido ? brl(l.valor) : l.valor > 0 ? `a receber ${brl(l.valor)}` : 'valor não informado'}</span></div>`).join('')}</div>` })}
     ${dicas.map((t) => `<div class="dica"><span>${t}</span></div>`).join('')}`;
 }

@@ -88,7 +88,7 @@ O painel **Hoje** avisa quando o último backup passou de 7 dias.
 | 5 | Hábitos | ✅ aprovada |
 | 6 | Metas do semestre | |
 | 7 | Conteúdo | |
-| 8 | Trabalhos paralelos (RT pousadas, Bela Flor) | |
+| 8 | Trabalhos paralelos | ✅ pronto para validar |
 | 9 | Estudos | |
 | 10 | Vencimentos e documentos | |
 | 11 | Revisão semanal | |
@@ -193,3 +193,18 @@ Dê dois cliques em **Publicar Fluere.command**.
 - **Se o mesmo item for mudado nos dois aparelhos:** vale a mudança mais recente.
 - **Desligar** só para de enviar e receber neste aparelho; nada é apagado.
 - O backup em arquivo continua existindo como segurança extra.
+
+## Trabalhos paralelos (Mais → Trabalhos)
+
+Duas frentes fora do consultório, em três abas: **Visão geral**, **RT pousadas** e **Bela Flor**. Nenhuma passa pelo CNPJ, então não há imposto.
+
+- **Valores:** em "Valores e dia da visita", informe quanto cada trabalho rende por mês e o dia em que o pagamento costuma cair. Esses valores ficam só no seu cofre. Em "Recebimento", toque em "marcar recebido" quando o dinheiro chegar: só o que foi recebido entra no **Entrou** do Resumo geral (Dinheiro → Resumo geral). Os avisos de recebimento valem a partir do mês em que você informou os valores.
+- **RT pousadas:**
+  - Cadastre cada pousada. Em "Registrar visita", avalie o checklist item por item (conforme, não conforme ou N/A). "Tudo conforme" preenche o que ainda está em branco, e você marca só as exceções. Cada não conformidade aceita uma observação.
+  - A visita mostra o % de conformidade e a lista de não conformidades. A aba mostra a evolução das últimas visitas.
+  - O checklist é uma **base inspirada na RDC 216/2004**, editável em "Checklist da visita" (tirar, acrescentar, voltar ao original). Visitas antigas guardam o checklist da época.
+  - **Documentos com validade** (alvará, dedetização, limpeza do reservatório…): a lista começa vazia; o Fluere avisa 30 dias antes e quando vence.
+  - **Visita semanal:** no dia escolhido (padrão: sexta) aparece o lembrete; se passar do dia sem visita, vira aviso.
+  - As tarefas de RT são as do módulo Tarefas, na área "RT pousadas".
+- **Bela Flor:** tarefas e entregas com prazo (também da área "Bela Flor" do módulo Tarefas), posts com etapas (Reels: ideia → roteiro → gravado → editado → postado; carrossel: ideia → texto → design → postado; stories: ideia → planejado → postado), avisos de post atrasado e **relatório mensal** (lembrete a partir do dia 25 e nos primeiros 10 dias do mês seguinte).
+- Os avisos de tudo isso aparecem no painel Hoje.
