@@ -441,3 +441,16 @@ h1 em,h2 em,.titulo em{font-style:italic;color:var(--acc)}
 .linha > .marca-area{width:10px;height:10px;border-radius:50%}
 .chips .chip[data-receber]{cursor:pointer}
 .linhas.quebra .tx b{white-space:normal}
+
+/* =========================================================
+   MÓDULO GASTOS: importação de fatura
+   ========================================================= */
+.import-lista{display:flex;flex-direction:column;gap:8px;max-height:46vh;overflow-y:auto;margin:6px 0 12px}
+.imp-linha{border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.imp-linha.repetido{opacity:.5}
+.imp-top{display:flex;align-items:center;gap:10px;font-size:14px}
+.imp-top input{flex:none;width:18px;height:18px;accent-color:var(--acc)}
+.imp-desc{flex:1;min-width:0;overflow-wrap:anywhere}
+.imp-desc small{display:block;color:var(--soft);font-size:12px}
+.imp-sel{display:grid;grid-template-columns:90px 1fr;gap:8px}
+.imp-sel select{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:8px;font-size:14px;min-height:40px;width:100%}

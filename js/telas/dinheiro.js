@@ -8,17 +8,18 @@
 
 import * as G from '../nucleo/graficos.js';
 import { cabecalho, painel, kpi, abas, icone, areaLimpa } from '../nucleo/ui.js';
-import { brl, esc, normal, isoMes, mesPorExtenso, somarMeses, diaPorExtenso, deIso } from '../nucleo/util.js';
+import { brl, r2, esc, normal, isoMes, mesPorExtenso, somarMeses, diaPorExtenso, deIso } from '../nucleo/util.js';
 import * as C from '../modulos/consultorio.js';
+import * as S from '../modulos/gastos.js';
 
 const PARTES = [
   { rota: 'consultorio', nome: 'Consultório', desenhar: consultorio, ligar: ligarConsultorio },
-  { rota: 'gastos', nome: 'Gastos', desenhar: gastos },
-  { rota: 'resumo', nome: 'Resumo geral', desenhar: resumo },
+  { rota: 'gastos', nome: 'Gastos', desenhar: gastos, ligar: ligarGastos },
+  { rota: 'resumo', nome: 'Resumo geral', desenhar: resumo, ligar: (el) => el.addEventListener('click', (e) => { if (e.target.closest('[data-cfg-g]')) S.abrirConfigGastos(); }) },
 ];
 
 /* O que a tela lembra enquanto você navega */
-const estado = { mes: isoMes(), filtro: 'tudo', busca: '' };
+const estado = { mes: isoMes(), filtro: 'tudo', busca: '', filtroG: 'tudo', buscaG: '' };
 let ultimo = null;
 
 export function desenhar(el, partes = ultimo?.partes ?? []) {
@@ -47,7 +48,7 @@ export function desenhar(el, partes = ultimo?.partes ?? []) {
 const redesenhar = () => ultimo && desenhar(ultimo.el, ultimo.partes);
 
 const pct = (v, total) => (total > 0 ? Math.round((v / total) * 100) : 0);
-const curto = (v) => (Math.abs(v) >= 100000 ? `R$ ${(v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mil` : brl(v).replace(/,00$/, ''));
+const curto = (v) => (Math.abs(v) >= 100000 ? `R$ ${(v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mil` : Math.abs(v) >= 1000 ? brl(Math.round(v)).replace(/,00$/, '') : brl(v).replace(/,00$/, ''));
 /** Para o meio das roscas, onde cabe pouco: 4450 → "R$ 4,5 mil" */
 const mini = (v) => (Math.abs(v) >= 1000 ? `R$ ${(v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mil` : brl(v).replace(',00', ''));
 
@@ -200,51 +201,132 @@ function ligarConsultorio(el) {
   });
 }
 
+
 /* =========================================================
-   GASTOS (próxima etapa)
+   GASTOS (CPF e CNPJ)
    ========================================================= */
+const FILTROS_GASTO = [['tudo', 'Tudo'], ['CNPJ', 'CNPJ'], ['CPF', 'CPF'], ['rev', 'Revisar']];
+
 function gastos() {
+  const s = S.calcular(estado.mes);
+  const cfg = S.config();
+  const q = normal(estado.buscaG.trim());
+  const lista = s.L.filter((g) => {
+    if (estado.filtroG === 'CNPJ' && g.conta !== 'CNPJ') return false;
+    if (estado.filtroG === 'CPF' && g.conta !== 'CPF') return false;
+    if (estado.filtroG === 'rev' && !g.revisar) return false;
+    if (q && !normal(`${g.desc} ${g.cat} ${g.conta} ${S.nomeMeio(g.meio)}`).includes(q)) return false;
+    return true;
+  });
+  const grupos = [];
+  for (const g of lista) { if (!grupos.length || grupos.at(-1).data !== g.data) grupos.push({ data: g.data, itens: [] }); grupos.at(-1).itens.push(g); }
+  const pagos = S.fixasPagas(estado.mes);
+  const cores = s.categorias.map((c, i) => ({ ...c, cor: G.CORES[i % G.CORES.length] }));
+  const dicas = S.dicas(estado.mes);
+
   return `
     <div class="grade g-kpi">
-      ${kpi({ rot: 'Gasto no mês', valor: brl(0), sub: 'limite ainda não definido', extra: G.trilho(0, 'var(--g3)') })}
-      ${kpi({ rot: 'CPF', valor: brl(0), sub: 'pessoal', classe: 'rosa' })}
-      ${kpi({ rot: 'CNPJ', valor: brl(0), sub: 'consultório', classe: 'quente' })}
-      ${kpi({ rot: 'Para revisar', valor: 0, unidade: 'gastos', sub: 'CPF ou CNPJ?' })}
+      ${kpi({ rot: 'Gasto no mês', valor: curto(s.total), sub: s.limite ? `limite de ${brl(s.limite)}` : '<button class="link-mini" data-cfg-g>definir limite</button>', extra: s.pctLimite == null ? '' : G.trilho(s.pctLimite, s.pctLimite >= 100 ? 'var(--neg-forte)' : s.pctLimite >= 80 ? 'var(--g3)' : 'var(--g4)'), classe: 'quente' })}
+      ${kpi({ rot: 'CPF', valor: curto(s.cpf), sub: `${pct(s.cpf, s.total)}% do total`, classe: 'rosa' })}
+      ${kpi({ rot: 'CNPJ', valor: curto(s.cnpj), sub: s.custosConsultorio ? `+ ${brl(s.custosConsultorio)} de custos já no líquido do consultório` : `${pct(s.cnpj, s.total)}% do total` })}
+      ${kpi({ rot: 'Para revisar', valor: s.revisar, unidade: s.revisar === 1 ? 'gasto' : 'gastos', sub: s.revisar ? '<button class="link-mini" data-filtro-g="rev">ver agora</button>' : 'CPF ou CNPJ?' })}
     </div>
+
     <div class="grade g-12">
-      ${painel({ rot: 'Para onde foi', titulo: 'Por categoria',
-        corpo: `<div class="rosca-bloco">${G.rosca([], { centro: 'R$ 0', sub: 'gastos do mês' })}<div class="legenda">${['Casa', 'Mercado', 'Restaurante', 'Transporte', 'Beleza', 'Outros'].map((c, i) => `<div><i style="background:${G.CORES[(i + 1) % G.CORES.length]}"></i><span>${c}</span><span class="p">0%</span></div>`).join('')}</div></div>` })}
-      ${painel({ rot: 'Faturas', titulo: 'Cartões e contas fixas',
-        corpo: '<div class="vazio">Seus 2 cartões, as contas fixas e os parcelados aparecem aqui no próximo módulo.</div>' })}
-    </div>`;
+      ${painel({ rot: 'Para onde foi', titulo: 'Por <em>categoria</em>',
+        corpo: `<div class="rosca-bloco">${G.rosca(cores, { centro: mini(s.total), sub: 'gastos do mês' })}
+          <div class="legenda">${cores.length ? cores.slice(0, 7).map((c) => `<div><i style="background:${c.cor}"></i><span>${esc(c.rotulo)}</span><span class="p">${pct(c.valor, s.total)}%</span></div>`).join('') : '<div class="vazio" style="padding:0;text-align:left">Sem gastos neste mês.</div>'}</div></div>` })}
+      ${painel({ rot: 'Faturas e contas fixas', titulo: 'O que <em>pagar</em>',
+        corpo: `
+          ${s.porMeio.length ? `<div class="linhas">${s.porMeio.map((m) => `<div class="linha"><span class="tx"><b>${esc(m.nome)}</b><small>${m.qtd} ${m.qtd === 1 ? 'lançamento' : 'lançamentos'}</small></span><span class="num">${brl(m.valor)}</span></div>`).join('')}</div>` : ''}
+          ${s.F.length ? `<div class="rot">Contas fixas · ${s.fixasPagasN} de ${s.F.length} pagas</div>
+            <div class="linhas quebra">${s.F.map((f) => `<div class="linha">
+              <button class="caixa-chk ${pagos[f.id] ? 'ok' : ''}" data-fixa-paga="${f.id}" aria-label="Marcar ${esc(f.nome)}">${pagos[f.id] ? icone.check(14) : ''}</button>
+              <button class="tx" data-fixa="${f.id}" style="text-align:left"><b style="${pagos[f.id] ? 'color:var(--soft)' : ''}">${esc(f.nome)}</b><small>vence dia ${f.dia} · ${f.conta}</small></button>
+              <span class="num">${brl(f.valor)}</span></div>`).join('')}</div>` : '<div class="vazio" style="padding:8px 0">Aluguel, luz, internet, academia… cadastre uma vez e elas entram todo mês.</div>'}
+          ${s.futuros ? `<div class="dica"><span>Já comprometido nos próximos meses (parcelas): <b>${brl(s.futuros)}</b></span></div>` : ''}
+          <div class="acts"><button class="btn contorno" data-nova-fixa>${icone.soma(16)} Conta fixa</button><button class="btn contorno" data-cfg-g>${icone.ajustes(16)} Ajustes</button></div>` })}
+    </div>
+
+    ${dicas.map((t) => `<div class="dica"><span>${t}</span></div>`).join('')}
+
+    ${painel({ rot: 'Extrato', titulo: 'Lançamentos do <em>mês</em>',
+      corpo: `
+        <input class="busca" type="search" id="busca-g" placeholder="Buscar por descrição, categoria ou cartão" value="${esc(estado.buscaG)}" autocomplete="off">
+        <div class="filtros">${FILTROS_GASTO.map(([v, n]) => `<button class="chip ${estado.filtroG === v ? 'acc' : ''}" data-filtro-g="${v}">${n}${v === 'rev' && s.revisar ? ` · ${s.revisar}` : ''}</button>`).join('')}
+          <span style="flex:1"></span><button class="btn contorno" data-importar>Importar fatura</button><button class="btn pri" data-novo-g>${icone.soma(16)} Gasto</button></div>
+        ${lista.length ? grupos.map((gr) => `
+          <div class="dia-ext">${diaPorExtenso(deIso(gr.data))}</div>
+          <div class="linhas">${gr.itens.map((g) => `
+            <div class="linha">
+              <button class="tx" data-editar-g="${g.id}" style="text-align:left"><b>${esc(g.desc)}</b>
+                <small>${esc(g.cat)} · ${esc(S.nomeMeio(g.meio))}${g.revisar ? ' · <span class="chip neg" style="padding:1px 8px">revisar</span>' : ''}</small></button>
+              <span class="chips" style="flex-direction:column;align-items:flex-end;gap:4px"><span class="num ${g.valor < 0 ? 'neg-txt' : ''}" style="font-weight:600">${brl(g.valor)}</span>
+                <span class="chips">${g.revisar && estado.filtroG === 'rev' ? `<button class="chip pos" data-confirmar-g="${g.id}">confirmar</button>` : ''}<button class="chip ${g.conta === 'CNPJ' ? 'mid' : 'acc'}" data-trocar-g="${g.id}" aria-label="Trocar conta (agora ${g.conta})">${g.conta}</button></span></span>
+            </div>`).join('')}</div>`).join('')
+          : `<div class="vazio">${s.L.length ? 'Nada com esse filtro.' : 'Nenhum gasto neste mês. Toque em “+ Gasto” ou em “Importar fatura” ✦'}</div>`}` })}`;
+}
+
+function ligarGastos(el) {
+  const acha = (id) => S.todos().find((g) => g.id === id);
+  el.addEventListener('click', async (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    const d = b.dataset;
+    if (d.novoG !== undefined) S.abrirGasto(null, { mes: estado.mes });
+    else if (d.editarG) S.abrirGasto(acha(d.editarG));
+    else if (d.importar !== undefined) S.abrirImportacao();
+    else if (d.trocarG) await S.trocarConta(acha(d.trocarG));
+    else if (d.confirmarG) await S.confirmarGasto(acha(d.confirmarG));
+    else if (d.filtroG) { estado.filtroG = d.filtroG; redesenhar(); }
+    else if (d.novaFixa !== undefined) S.abrirFixa();
+    else if (d.fixa) S.abrirFixa(S.fixas().find((f) => f.id === d.fixa));
+    else if (d.fixaPaga) await S.alternarFixaPaga(estado.mes, d.fixaPaga);
+    else if (d.cfgG !== undefined) S.abrirConfigGastos();
+  });
+  const busca = el.querySelector('#busca-g');
+  busca?.addEventListener('input', () => {
+    estado.buscaG = busca.value;
+    const pos = busca.selectionStart;
+    redesenhar();
+    const nova = ultimo.el.querySelector('#busca-g');
+    nova.focus(); nova.setSelectionRange(pos, pos);
+  });
 }
 
 /* =========================================================
    RESUMO GERAL (entrou · saiu · sobrou)
    Entrou = líquido do consultório (+ trabalhos paralelos, numa próxima etapa).
-   Saiu   = gastos (próxima etapa).
+   Saiu   = gastos CPF e CNPJ + contas fixas pessoais. Os custos fixos do
+            consultório já estão descontados no líquido, então não entram de novo.
    ========================================================= */
 function resumo() {
-  const c = C.calcular(estado.mes);
-  const entrou = Math.max(0, c.liquido), saiu = 0, sobrou = entrou - saiu;
-  const meses = Array.from({ length: 6 }, (_, i) => somarMeses(estado.mes, i - 5));
+  const ym = estado.mes;
+  const c = C.calcular(ym), s = S.calcular(ym), cfg = S.config();
+  const entrou = c.liquido, saiu = s.total, sobrou = r2(entrou - saiu);
+  const meses = Array.from({ length: 6 }, (_, i) => somarMeses(ym, i - 5));
   const barras = meses.map((m) => {
-    const x = C.calcular(m);
-    return { rotulo: mesPorExtenso(m).slice(0, 3).toLowerCase(), valor: Math.max(0, x.liquido), on: m === estado.mes, dica: brl(x.liquido) };
+    const v = r2(C.calcular(m).liquido - S.calcular(m).total);
+    return { rotulo: mesPorExtenso(m).slice(0, 3).toLowerCase(), valor: Math.max(0, v), on: m === ym, dica: brl(v) };
   });
+  const cores = s.categorias.map((x, i) => ({ ...x, cor: G.CORES[i % G.CORES.length] }));
+  const metaPct = cfg.metaSobra > 0 ? Math.max(0, (sobrou / cfg.metaSobra) * 100) : null;
+  const dicas = S.dicas(ym);
   return `
     <div class="grade g-3">
-      ${kpi({ rot: 'Entrou', valor: brl(entrou), sub: 'líquido do consultório' })}
-      ${kpi({ rot: 'Saiu', valor: brl(saiu), sub: 'os gastos entram no próximo módulo' })}
-      ${kpi({ rot: 'Sobrou', valor: brl(sobrou), sub: 'meta de sobra: no próximo módulo', classe: 'verde' })}
+      ${kpi({ rot: 'Entrou', valor: curto(entrou), sub: 'líquido do consultório' })}
+      ${kpi({ rot: 'Saiu', valor: curto(saiu), sub: 'CPF + CNPJ' })}
+      ${kpi({ rot: 'Sobrou', valor: curto(sobrou), sub: cfg.metaSobra ? `meta de ${brl(cfg.metaSobra)} · ${sobrou >= cfg.metaSobra ? 'batida ✦' : `faltam ${brl(cfg.metaSobra - sobrou)}`}` : '<button class="link-mini" data-cfg-g>definir meta de sobra</button>', extra: metaPct == null ? '' : G.trilho(metaPct, metaPct >= 100 ? 'var(--g4)' : 'var(--g1)'), classe: 'verde' })}
     </div>
     <div class="grade g-2">
-      ${painel({ rot: 'De onde entrou', titulo: 'Entradas',
-        corpo: `<div class="rosca-bloco">${G.rosca(entrou ? [{ rotulo: 'Consultório', valor: entrou, cor: 'var(--g1)' }] : [], { centro: mini(entrou), sub: 'entrou' })}
-          <div class="legenda"><div><i style="background:var(--g1)"></i><span>Consultório (líquido)</span><span class="p">${entrou ? 100 : 0}%</span></div>
-          <div><i style="background:var(--g3)"></i><span>Marketing Bela Flor</span><span class="p">—</span></div>
-          <div><i style="background:var(--g5)"></i><span>RT pousadas</span><span class="p">—</span></div></div></div>
-          <small style="color:var(--soft)">Bela Flor e RT entram quando o módulo de trabalhos ficar pronto.</small>` })}
-      ${painel({ rot: 'Quanto sobrou por mês', titulo: 'Últimos 6 meses', corpo: G.barras(barras, { altura: 150 }) })}
-    </div>`;
+      ${painel({ rot: 'Para onde foi', titulo: 'Gastos por <em>categoria</em>',
+        corpo: `<div class="rosca-bloco">${G.rosca(cores, { centro: mini(saiu), sub: 'gastos do mês' })}
+          <div class="legenda">${cores.length ? cores.slice(0, 7).map((x) => `<div><i style="background:${x.cor}"></i><span>${esc(x.rotulo)}</span><span class="p">${pct(x.valor, s.total)}%</span></div>`).join('') : '<div class="vazio" style="padding:0;text-align:left">Sem gastos neste mês.</div>'}</div></div>` })}
+      ${painel({ rot: 'Quanto sobrou por mês', titulo: 'Últimos 6 <em>meses</em>', corpo: G.barras(barras, { altura: 150 }) })}
+    </div>
+    ${painel({ rot: 'De onde entrou', titulo: 'Entradas',
+      corpo: `<div class="legenda"><div><i style="background:var(--g1)"></i><span>Consultório (líquido)</span><span class="p">${brl(entrou)}</span></div>
+        <div><i style="background:var(--g3)"></i><span>Marketing Bela Flor</span><span class="p">entra com o módulo de trabalhos</span></div>
+        <div><i style="background:var(--g5)"></i><span>RT pousadas</span><span class="p">entra com o módulo de trabalhos</span></div></div>` })}
+    ${dicas.map((t) => `<div class="dica"><span>${t}</span></div>`).join('')}`;
 }

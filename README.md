@@ -81,8 +81,8 @@ O painel **Hoje** avisa quando o último backup passou de 7 dias.
 | Etapa | O que | Situação |
 |---|---|---|
 | 0 | Fundação: visual, navegação, senha, criptografia, backup, instalação | ✅ pronta para validar |
-| 1 | Financeiro do consultório | ✅ pronta para validar |
-| 2 | Gastos CPF/CNPJ e resumo geral (+ sincronização Mac/iPhone) | |
+| 1 | Financeiro do consultório | ✅ aprovada |
+| 2 | Gastos CPF/CNPJ e resumo geral (+ sincronização Mac/iPhone) | ✅ gastos prontos para validar; sincronização falta |
 | 3 | Pacientes | |
 | 4 | Tarefas e planejador da semana | ✅ aprovada |
 | 5 | Hábitos | ✅ aprovada |
@@ -161,3 +161,14 @@ Dê dois cliques em **Publicar Fluere.command**.
 - **Tudo conta no mês da venda:** bruto, repasse de Campo Largo e imposto. O que falta pagar aparece como "a receber", no painel e no Hoje.
 - **Contas do mês:** repasse, aluguel, imposto e custos fixos, com caixinha para marcar como pagos. O Hoje avisa quando ficou alguma conta do mês anterior.
 - **Extrato:** busca por paciente, tipo ou forma de pagamento, e filtros por local e "a receber". Um toque no selo marca como recebido.
+
+## Gastos CPF e CNPJ (Dinheiro → Gastos)
+
+- **Lançar:** "+ Novo" → Gasto. Escolha CPF ou CNPJ, categoria, como pagou (seus cartões, Pix, débito ou dinheiro), a data da compra e o **mês da fatura**. Estorno: digite o valor com sinal de menos.
+- **Parcelado:** escolha o número de parcelas. Você lança uma vez só e o sistema cria uma parcela em cada fatura dos próximos meses. O painel mostra quanto já está comprometido.
+- **Não sabe se é CPF ou CNPJ?** Marque "Ainda não sei". O gasto vai para a aba **Revisar** e você confirma depois. Tocar no selo CPF/CNPJ de um gasto troca a conta.
+- **Contas fixas:** aluguel, luz, internet, academia… cadastre uma vez e elas entram todo mês. Você marca quando pagar, e o Hoje avisa as vencidas.
+- **Importar fatura:** "Importar fatura" lê um arquivo CSV ou OFX do banco **aqui no aparelho** (nada é enviado). Ele sugere conta e categoria, ignora o que já foi lançado e aprende com as suas correções. Para fatura em PDF, peça no app do banco o arquivo CSV ou OFX.
+- **Ajustes:** nomes dos cartões, limite de gastos e meta de sobra (valem todo mês) e as categorias.
+- **Custos fixos do consultório** (contadora, CRN, sistemas) já são descontados no líquido do Módulo 1, por isso não entram de novo aqui.
+- **Resumo geral:** entrou (líquido do consultório) − saiu (gastos e contas fixas) = sobrou, com rosca por categoria, barras dos últimos 6 meses e dicas automáticas.
