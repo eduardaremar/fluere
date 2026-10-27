@@ -15,6 +15,7 @@ import * as dados from './nucleo/dados.js';
 import * as cofre from './nucleo/cofre.js';
 import * as avisos from './nucleo/avisos.js';
 import * as backup from './nucleo/backup.js';
+import * as nuvem from './nucleo/sincronia.js';
 import { abrirFolha, fecharFolha, folhaAberta, toast, icone, areaLimpa } from './nucleo/ui.js';
 import { pref, diasDesde } from './nucleo/util.js';
 import { pedirSenha } from './telas/bloqueio.js';
@@ -167,12 +168,14 @@ async function abrirSistema() {
   mostrarMenus(true);
   pararDeOuvir = dados.ouvir(() => desenharTela());
   desenharTela();
+  nuvem.iniciar();
 }
 
 function bloquear() {
   if (!cofre.estaAberto()) return;
   fecharFolha();
   pararDeOuvir?.();
+  nuvem.parar();
   cofre.fechar();
   dados.esquecer();
   $('tela').innerHTML = '';

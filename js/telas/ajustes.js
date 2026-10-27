@@ -7,6 +7,7 @@
 import * as cofre from '../nucleo/cofre.js';
 import * as dados from '../nucleo/dados.js';
 import * as backup from '../nucleo/backup.js';
+import * as nuvem from '../nucleo/sincronia.js';
 import { abrirFolha, fecharFolha, confirmar, toast, icone, cabecalho } from '../nucleo/ui.js';
 import { pref, dataHora, diasDesde, esc } from '../nucleo/util.js';
 import { htmlChave, ligarBotoesChave } from './bloqueio.js';
@@ -35,6 +36,9 @@ export function desenhar(el) {
   const textoBackup = ultimo ? `Último: ${dataHora(ultimo)}${diasDesde(ultimo) >= 7 ? ' · já passou de 7 dias' : ''}` : 'Você ainda não fez nenhum backup';
   const total = Object.entries(dados.contagem()).filter(([c]) => c !== 'config').reduce((s, [, n]) => s + n, 0);
 
+  const nv = nuvem.estado();
+  const textoNuvem = nv.erro ? nv.erro : nv.ultima ? `Sincronizado em ${dataHora(nv.ultima)}` : 'Ainda não sincronizou';
+
   el.innerHTML = `
     ${cabecalho({ voltar: ['#/mais', 'Mais'], titulo: 'Ajustes <em>e backup</em>' })}
 
@@ -56,6 +60,16 @@ export function desenhar(el) {
         ${item('restaurar', icone.restaurar, 'Restaurar um backup', 'Substitui os dados deste aparelho')}
       </div>
       <input type="file" id="arquivo-backup" accept=".fluere,application/json" hidden>
+    </section>
+
+    <section>
+      <h2>Sincronização</h2>
+      <div class="lista">
+        ${nv.ligada
+          ? `${item('nuvem-agora', icone.nuvem, 'Sincronizar agora', `${esc(textoNuvem)} · ${esc(nv.email || '')}`)}
+             ${item('nuvem-desligar', icone.celular, 'Desligar neste aparelho', 'Os dados daqui e os da nuvem continuam onde estão')}`
+          : item('nuvem-ligar', icone.nuvem, 'Ligar a sincronização', 'Mac e iPhone com os mesmos dados, embaralhados na nuvem')}
+      </div>
     </section>
 
     <section>
@@ -114,6 +128,9 @@ export function desenhar(el) {
     const acao = b.dataset.acao;
     if (acao === 'backup') fazerBackup(el);
     else if (acao === 'restaurar') el.querySelector('#arquivo-backup').click();
+    else if (acao === 'nuvem-ligar') folhaLigarNuvem(el);
+    else if (acao === 'nuvem-agora') sincronizarAgora(el);
+    else if (acao === 'nuvem-desligar') desligarNuvem(el);
     else if (acao === 'bloquear') window.dispatchEvent(new Event('fluere:bloquear'));
     else if (acao === 'senha') folhaTrocarSenha();
     else if (acao === 'chave') folhaNovaChave();
@@ -246,7 +263,7 @@ function folhaSobre() {
     <h3>Onde ficam os meus dados</h3>
     <div class="texto">
       <p><b>Neste aparelho</b>, dentro do navegador, embaralhados com a sua senha. Sem a senha ou a chave de recuperação, ninguém lê.</p>
-      <p><b>Nada é enviado para a internet.</b> Quando ligarmos a sincronização (depois da Etapa 2), os dados vão para a nuvem já embaralhados.</p>
+      <p>${nuvem.ligada() ? '<b>A sincronização está ligada:</b> os dados vão para a nuvem (Supabase, em São Paulo) <b>já embaralhados</b>. A nuvem não consegue ler nada.' : '<b>Nada é enviado para a internet.</b> Se você ligar a sincronização, os dados vão para a nuvem já embaralhados.'}</p>
       <p><b>Backup:</b> o arquivo .fluere também vai embaralhado. Guarde no iCloud Drive.</p>
       <p>O que está guardado agora:</p>
       <ul>${linhas}</ul>
@@ -274,5 +291,106 @@ function folhaApagar() {
     await cofre.apagarAparelho();
     pref.gravar('ultimoBackup', null);
     location.reload();
+  };
+}
+
+/* ---------- sincronização ---------- */
+
+async function sincronizarAgora(el) {
+  toast('Sincronizando…');
+  const r = await nuvem.sincronizar();
+  toast(r.ok ? (r.mudou ? 'Pronto: chegaram dados novos ✦' : 'Tudo em dia ✦') : (nuvem.estado().erro || 'Não consegui sincronizar.'));
+  desenhar(el);
+}
+
+async function desligarNuvem(el) {
+  if (!(await confirmar({ titulo: 'Desligar a sincronização?', texto: 'Este aparelho para de enviar e receber. Os dados daqui e os que já estão na nuvem continuam onde estão.', ok: 'Desligar', perigo: true }))) return;
+  nuvem.desligar();
+  toast('Sincronização desligada neste aparelho.');
+  desenhar(el);
+}
+
+function folhaLigarNuvem(el) {
+  const f = abrirFolha(`
+    <h3>Ligar a <em>sincronização</em></h3>
+    <p class="sub">Entre com o e-mail e a senha da <b>conta da nuvem</b> (a que você criou no Supabase). Ela é diferente da senha do Fluere.</p>
+    <form id="f-nuvem" novalidate>
+      <div class="fld"><label for="n-email">E-mail da nuvem</label><input id="n-email" type="email" autocomplete="username" autocapitalize="none" autofocus></div>
+      <div class="fld"><label for="n-senha">Senha da nuvem</label><input id="n-senha" type="password" autocomplete="current-password"></div>
+      <div class="erro" id="n-erro" role="alert"></div>
+      <div class="acts"><button type="button" class="btn sec" data-fechar>Cancelar</button><button type="submit" class="btn pri">Continuar</button></div>
+    </form>`);
+  f.querySelector('[data-fechar]').onclick = () => { nuvem.desligar(); fecharFolha(); };
+  f.querySelector('#f-nuvem').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const botao = f.querySelector('button[type=submit]');
+    const erro = f.querySelector('#n-erro');
+    const email = f.querySelector('#n-email').value, senha = f.querySelector('#n-senha').value;
+    if (!email || !senha) { erro.textContent = 'Preencha o e-mail e a senha da nuvem.'; return; }
+    botao.disabled = true; botao.textContent = 'Entrando…'; erro.textContent = '';
+    try {
+      const { situacao, remoto } = await nuvem.verificar(email, senha);
+      if (situacao === 'outro') folhaAdotar(remoto, el); else folhaPrimeiro(situacao, el);
+    } catch (e) {
+      botao.disabled = false; botao.textContent = 'Continuar';
+      erro.textContent = e.message;
+    }
+  };
+}
+
+function folhaPrimeiro(situacao, el) {
+  const total = Object.entries(dados.contagem()).filter(([c]) => c !== 'config').reduce((s, [, n]) => s + n, 0);
+  const f = abrirFolha(`
+    <h3>${situacao === 'mesmo' ? 'Reconectar' : 'Este será o primeiro aparelho'}</h3>
+    <p class="sub">${situacao === 'mesmo'
+      ? 'A nuvem já guarda o cofre deste aparelho. Vou só reconectar e conferir as diferenças.'
+      : `A nuvem está vazia. Vou enviar os <b>${total} ${total === 1 ? 'item' : 'itens'}</b> deste aparelho, <b>já embaralhados</b>. Depois, nos outros aparelhos, você entra com a mesma conta e a senha do Fluere daqui.`}</p>
+    <div class="erro" id="p-erro" role="alert"></div>
+    <div class="acts"><button type="button" class="btn sec" data-fechar>Cancelar</button><button type="button" class="btn pri" data-ligar>Ligar</button></div>`);
+  f.querySelector('[data-fechar]').onclick = () => { nuvem.desligar(); fecharFolha(); };
+  f.querySelector('[data-ligar]').onclick = async (ev) => {
+    ev.target.disabled = true; ev.target.textContent = 'Enviando…';
+    try {
+      await nuvem.ligarEsteAparelho();
+      fecharFolha();
+      toast('Sincronização ligada ✦');
+      desenhar(el);
+    } catch (e) {
+      ev.target.disabled = false; ev.target.textContent = 'Ligar';
+      f.querySelector('#p-erro').textContent = e.message;
+    }
+  };
+}
+
+function folhaAdotar(remoto, el) {
+  const total = Object.entries(dados.contagem()).filter(([c]) => c !== 'config').reduce((s, [, n]) => s + n, 0);
+  const f = abrirFolha(`
+    <h3>Trazer os dados da <em>nuvem</em></h3>
+    <p class="sub">A nuvem já guarda os dados de outro aparelho. Para usar o mesmo cofre, este aparelho vai <b>trocar o que tem aqui${total ? ` (${total} ${total === 1 ? 'item' : 'itens'})` : ''} pelo que está na nuvem</b>.</p>
+    ${total ? '<div class="opcoes acoes-tarefa"><button type="button" data-backup>Fazer backup do que há aqui antes</button></div>' : ''}
+    <form id="f-adotar" novalidate>
+      <div class="fld"><label for="d-senha">Senha do Fluere do primeiro aparelho</label>
+        <input id="d-senha" type="password" autocomplete="off" autofocus>
+        <small>Depois disso, esta passa a ser também a senha do Fluere neste aparelho.</small></div>
+      <div class="erro" id="d-erro" role="alert"></div>
+      <div class="acts"><button type="button" class="btn sec" data-fechar>Cancelar</button><button type="submit" class="btn pri">Trazer os dados</button></div>
+    </form>`);
+  f.querySelector('[data-fechar]').onclick = () => { nuvem.desligar(); fecharFolha(); };
+  f.querySelector('[data-backup]')?.addEventListener('click', async () => {
+    try { if (await backup.fazer()) toast('Backup gerado.'); } catch { toast('Não consegui gerar o backup.'); }
+  });
+  f.querySelector('#f-adotar').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const botao = f.querySelector('button[type=submit]');
+    botao.disabled = true; botao.textContent = 'Baixando…';
+    try {
+      await nuvem.adotarCofreDaNuvem(remoto, f.querySelector('#d-senha').value);
+      fecharFolha();
+      toast('Pronto: os dados da nuvem chegaram ✦');
+      desenhar(el);
+    } catch (e) {
+      botao.disabled = false; botao.textContent = 'Trazer os dados';
+      f.querySelector('#d-erro').textContent = e.message;
+    }
   };
 }

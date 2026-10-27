@@ -11,6 +11,7 @@
 import * as cofre from './cofre.js';
 import * as C from './cripto.js';
 import * as dados from './dados.js';
+import * as nuvem from './sincronia.js';
 import { isoDia, pref } from './util.js';
 
 const FORMATO = 'fluere-backup';
@@ -68,6 +69,7 @@ export async function restaurar(backup, { senha, chaveRec }) {
     itens.push({ id: r.id, col: r.col, upd: r.upd, del: false, dados: await C.decifrar(mestraDoBackup, r) });
   }
   await cofre.substituirTudo(itens);
+  nuvem.recomecarAcompanhamento();
   await dados.carregar();
   return itens.filter((i) => !i.del).length;
 }

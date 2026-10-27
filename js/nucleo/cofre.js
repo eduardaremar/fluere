@@ -67,7 +67,7 @@ const lerMeta = (k) => operar('meta', 'readonly', (l) => l.get(k));
 const gravarMeta = (obj) => operar('meta', 'readwrite', (l) => l.put(obj));
 
 /** Identificador deste aparelho (para saber quem alterou o quê na sincronização). */
-function idDoAparelho() {
+export function idDoAparelho() {
   let id = pref.ler('aparelho');
   if (!id) { id = novoId(); pref.gravar('aparelho', id); }
   return id;
@@ -241,8 +241,44 @@ export async function substituirTudo(itens) {
   });
 }
 
+/* ---------- para a sincronização (js/nucleo/sincronia.js) ---------- */
+
+/** O "meta" do cofre (a chave mestra trancada). Vai para a nuvem; sem a senha ele não abre nada. */
+export const metaDoCofre = () => lerMeta('cofre');
+
+/** Troca só o meta (senha ou chave de recuperação mudaram em outro aparelho). A chave mestra é a mesma. */
+export const gravarMetaDoCofre = (meta) => gravarMeta({ ...meta, k: 'cofre' });
+
+/** Todos os registros como estão guardados (embaralhados). */
+export async function registrosBrutos() {
+  return (await operar('registros', 'readonly', (l) => l.getAll())) || [];
+}
+
+/** Grava registros vindos da nuvem, só se forem mais novos que os daqui. Devolve quantos mudaram. */
+export async function aplicarBrutos(regs) {
+  if (!regs.length) return 0;
+  const locais = new Map((await registrosBrutos()).map((r) => [r.id, r.upd]));
+  const novos = regs.filter((r) => !locais.has(r.id) || r.upd > locais.get(r.id));
+  if (!novos.length) return 0;
+  await operar('registros', 'readwrite', (l) => { for (const r of novos) l.put(r); });
+  return novos.length;
+}
+
+/**
+ * Este aparelho passa a usar o cofre da nuvem: abre o meta de lá com a senha dele,
+ * troca o meta daqui e esvazia os registros (eles chegam da nuvem em seguida).
+ * Lança erro se a senha não abrir.
+ */
+export async function adotarCofre(meta, senha) {
+  const mestra = await destrancarMeta(meta, { senha });
+  await gravarMeta({ ...meta, k: 'cofre' });
+  await operar('registros', 'readwrite', (l) => { l.clear(); });
+  chaveMestra = mestra;
+}
+
 /** Apaga TUDO deste aparelho (cofre e registros). Não tem volta. */
 export async function apagarAparelho() {
+  pref.gravar('nuvem', null);
   chaveMestra = null;
   if (banco) { banco.close(); banco = null; }
   await new Promise((ok, falha) => {

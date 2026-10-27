@@ -182,3 +182,14 @@ Dê dois cliques em **Publicar Fluere.command**.
 - **Avisos:** retorno pendente (pacote ativo sem próxima consulta), consulta que já passou sem ser registrada, pacote na última consulta e aniversários da semana.
 - **Vendas antigas:** se um atendimento de pacote foi lançado antes de cadastrar o paciente, abra a ficha (o nome precisa ser igual) e toque em "Abrir pacote" ao lado do pagamento.
 - **Arquivar** esconde o paciente das listas sem apagar nada. **Apagar** remove a ficha e os pacotes; as vendas do financeiro continuam.
+
+## Sincronização Mac ⇄ iPhone (Mais → Ajustes e backup → Sincronização)
+
+- **O que vai para a nuvem:** só os registros **já embaralhados** e a chave do cofre **trancada pela senha do Fluere**. A nuvem (Supabase, região São Paulo) não lê nada. O banco só entrega as linhas para quem entra com a conta da nuvem.
+- **Duas senhas diferentes:** a da **conta da nuvem** (e-mail e senha criados no Supabase) e a **senha do Fluere**. Use senhas fortes e diferentes entre si.
+- **Primeiro aparelho** (o que tem os seus dados): Ajustes → "Ligar a sincronização" → e-mail e senha da nuvem → "Ligar". Tudo sobe embaralhado.
+- **Outros aparelhos:** o mesmo caminho, mas ele vai pedir a **senha do Fluere do primeiro aparelho** e **troca os dados daqui pelos da nuvem**. Faça o backup antes, se houver algo que você queira guardar. Depois disso a senha do Fluere é a mesma nos dois aparelhos (se você trocar a senha em um, o outro acompanha na próxima sincronização).
+- **Quando sincroniza:** ao abrir o Fluere, uns 3 segundos depois de você salvar algo, a cada 90 segundos com o app aberto e quando você volta para ele. Sem internet, tudo continua funcionando e se acerta quando a conexão voltar.
+- **Se o mesmo item for mudado nos dois aparelhos:** vale a mudança mais recente.
+- **Desligar** só para de enviar e receber neste aparelho; nada é apagado.
+- O backup em arquivo continua existindo como segurança extra.
