@@ -8,6 +8,9 @@ import * as cofre from '../nucleo/cofre.js';
 import * as dados from '../nucleo/dados.js';
 import * as backup from '../nucleo/backup.js';
 import * as nuvem from '../nucleo/sincronia.js';
+import * as V from '../modulos/vencimentos.js';
+import * as R from '../modulos/revisao.js';
+import * as H from '../modulos/habitos.js';
 import { abrirFolha, fecharFolha, confirmar, toast, icone, cabecalho } from '../nucleo/ui.js';
 import { pref, dataHora, diasDesde, esc } from '../nucleo/util.js';
 import { htmlChave, ligarBotoesChave } from './bloqueio.js';
@@ -73,6 +76,16 @@ export function desenhar(el) {
     </section>
 
     <section>
+      <h2>Lembretes no iPhone</h2>
+      <div class="lista">
+        ${item('lembrete-venc', icone.vencimentos, 'Vencimentos', 'Avisa antes de cada vencimento, na véspera e no dia')}
+        ${item('lembrete-dom', icone.revisao, 'Revisão de domingo', 'Todo domingo, no horário que você escolher')}
+        ${item('lembrete-hab', icone.rotina, 'Hábitos', 'Os hábitos que têm horário de lembrete')}
+      </div>
+      <p class="sub" style="margin:8px 4px 0;font-size:12.5px">Os lembretes entram no app Calendário do iPhone, que avisa sozinho mesmo com o Fluere fechado. Nada sai do seu aparelho. Adicionar de novo atualiza, não duplica.</p>
+    </section>
+
+    <section>
       <h2>Segurança</h2>
       <div class="lista">
         ${item('bloquear', icone.cadeado, 'Bloquear agora', 'Pede a senha de novo')}
@@ -124,13 +137,16 @@ export function desenhar(el) {
   });
 
   /* botões da lista */
-  el.querySelectorAll('[data-acao]').forEach((b) => b.addEventListener('click', () => {
+  el.querySelectorAll('[data-acao]').forEach((b) => b.addEventListener('click', async () => {
     const acao = b.dataset.acao;
     if (acao === 'backup') fazerBackup(el);
     else if (acao === 'restaurar') el.querySelector('#arquivo-backup').click();
     else if (acao === 'nuvem-ligar') folhaLigarNuvem(el);
     else if (acao === 'nuvem-agora') sincronizarAgora(el);
     else if (acao === 'nuvem-desligar') desligarNuvem(el);
+    else if (acao === 'lembrete-venc') { if (!(await V.enviarParaCalendario())) toast('Cadastre um vencimento primeiro.'); }
+    else if (acao === 'lembrete-dom') R.abrirLembreteDomingo();
+    else if (acao === 'lembrete-hab') { if (!(await H.baixarLembretesDeTodos())) toast('Nenhum hábito tem horário de lembrete. Defina no próprio hábito.'); }
     else if (acao === 'bloquear') window.dispatchEvent(new Event('fluere:bloquear'));
     else if (acao === 'senha') folhaTrocarSenha();
     else if (acao === 'chave') folhaNovaChave();

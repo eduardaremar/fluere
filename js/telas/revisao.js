@@ -48,7 +48,8 @@ export function desenhar(el) {
         <button type="button" class="redondo" data-sem="7" aria-label="Próxima semana">${icone.seta(18)}</button>
         ${estado.segunda !== segundaDaSemana() ? '<button type="button" class="link-mini" data-sem="hoje">esta semana</button>' : ''}
       </div>
-      ${feita ? `<span class="chip pos">${icone.check(12)} concluída em ${dataHora(feita.concluidaEm).split(' às')[0]}</span>` : '<span class="chip">em andamento</span>'}
+      <div class="chips"><button type="button" class="chip" data-lembrete-dom>Lembrete de domingo</button>
+      ${feita ? `<span class="chip pos">${icone.check(12)} concluída em ${dataHora(feita.concluidaEm).split(' às')[0]}</span>` : '<span class="chip">em andamento</span>'}</div>
     </div>
 
     <div class="passos-rev">${PASSOS.map((n, i) => `<button type="button" class="${i === estado.passo ? 'on' : i < estado.passo ? 'ok' : ''}" data-passo="${i}"><b>${i + 1}</b><span>${n}</span></button>`).join('')}</div>
@@ -174,6 +175,7 @@ function ligar(el, d) {
     }
     else if (k.mover) { const t = T.todas().find((x) => x.id === k.mover); if (t) { await T.moverPara(t, d.prox); toast(`Tarefa movida para ${diaMes(d.prox)}.`); } }
     else if (k.tarefa) T.abrirTarefa(T.todas().find((x) => x.id === k.tarefa));
+    else if (k.lembreteDom !== undefined) R.abrirLembreteDomingo();
     else if (k.rev) abrirRevisaoSalva(R.todas().find((r) => r.id === k.rev));
     else if (k.copiar !== undefined) {
       try { await navigator.clipboard.writeText(T.textoDaSemana(d.prox)); toast('Copiado. Cole no chat com o Claude ✦'); }

@@ -16,6 +16,7 @@ import * as dados from '../nucleo/dados.js';
 import * as avisos from '../nucleo/avisos.js';
 import { abrirFolha, fecharFolha, toast, confirmar } from '../nucleo/ui.js';
 import { esc, r2, lerValor, isoDia, deIso, diaMes, somarMeses } from '../nucleo/util.js';
+import * as lembretes from '../nucleo/lembretes.js';
 
 const COL = 'vencimentos';
 
@@ -71,6 +72,29 @@ export async function renovar(v) {
   toast(`Renovado ✦ Próximo vencimento: ${diaMes(data)}/${data.slice(0, 4)}.`);
 }
 
+/* ---------- lembretes no Calendário do iPhone ---------- */
+
+const RRULE = { mensal: 'FREQ=MONTHLY', trimestral: 'FREQ=MONTHLY;INTERVAL=3', semestral: 'FREQ=MONTHLY;INTERVAL=6', anual: 'FREQ=YEARLY' };
+
+/** Evento de calendário do vencimento: às 9h, avisando 7 dias antes (ou o prazo escolhido), na véspera e no dia. */
+export function eventoDoVencimento(v) {
+  const ante = janela(v);
+  const alarmes = [...new Set([`-P${ante}D`, ...(ante > 7 ? ['-P7D'] : []), '-P1D', 'PT0M'])];
+  return lembretes.evento({
+    uid: `fluere-venc-${v.id}@fluere`, titulo: `Vence: ${v.nome}`, descricao: v.nota || '', inicio: `${v.data}T09:00`, duracao: 30,
+    regra: RRULE[v.recorrencia] || '', alarmes,
+  });
+}
+
+/** Passa vencimentos para o Calendário (um ou todos). Devolve quantos entraram. */
+export async function enviarParaCalendario(lista = todos()) {
+  // vencimento que não se repete e já passou não precisa de lembrete
+  const validos = lista.filter((v) => v.data && (RRULE[v.recorrencia] || v.data >= isoDia()));
+  if (!validos.length) return 0;
+  await lembretes.entregar(lembretes.calendario(validos.map(eventoDoVencimento)), validos.length === 1 ? `vencimento-${validos[0].nome.toLowerCase().replace(/[^a-z0-9]+/gi, '-')}.ics` : 'vencimentos.ics');
+  return validos.length;
+}
+
 /* ---------- formulário ---------- */
 
 const numBR = (v) => (v == null || v === '' || Number(v) === 0 ? '' : r2(v).toFixed(2).replace('.', ','));
@@ -96,7 +120,7 @@ export function abrirVencimento(venc = null, { prefill = {}, renovando = false }
       </div>
       <div class="fld"><label for="v-nota">Anotação (opcional)</label><input id="v-nota" value="${esc(a.nota || '')}" autocomplete="off"></div>
       <div class="erro" id="v-erro" role="alert"></div>
-      ${novo ? '' : '<div class="opcoes acoes-tarefa"><button type="button" data-acao="apagar" class="perigo">Apagar</button></div>'}
+      ${novo ? '' : '<div class="opcoes acoes-tarefa"><button type="button" data-acao="calendario">Lembrete no Calendário</button><button type="button" data-acao="apagar" class="perigo">Apagar</button></div>'}
       <div class="acts"><button type="button" class="btn sec" data-fechar>Cancelar</button><button type="submit" class="btn pri">Salvar</button></div>
     </form>`);
   const $ = (s) => f.querySelector(s);
@@ -120,6 +144,9 @@ export function abrirVencimento(venc = null, { prefill = {}, renovando = false }
     fecharFolha();
     toast(novo ? 'Vencimento cadastrado ✦' : 'Vencimento salvo.');
   };
+  f.querySelector('[data-acao="calendario"]')?.addEventListener('click', async () => {
+    if (!(await enviarParaCalendario([a]))) toast('Este vencimento não se repete e a data já passou.');
+  });
   f.querySelector('[data-acao="apagar"]')?.addEventListener('click', async () => {
     fecharFolha();
     if (await confirmar({ titulo: 'Apagar vencimento?', texto: esc(a.nome), ok: 'Apagar', perigo: true })) { await dados.apaga(COL, a.id); toast('Vencimento apagado.'); }

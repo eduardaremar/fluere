@@ -215,6 +215,7 @@ function habitos() {
           <span>${mesPorExtenso(ym)}</span>
           <button class="redondo" data-mes="1" aria-label="Próximo mês" ${ehAtual ? 'disabled' : ''}>${icone.seta(18)}</button>
           <span style="flex:1"></span>
+          <button class="btn sec" data-lembretes-hab>Lembretes no iPhone</button>
           <button class="btn pri" data-novo-hab>${icone.soma(16)} Novo hábito</button>
         </div>
         ${linhas || '<div class="vazio">Nenhum hábito ainda. Toque em “Novo hábito”.</div>'}
@@ -232,6 +233,7 @@ function ligarHabitos(el) {
     if (b.dataset.marcar) await H.alternar(acha(b.dataset.marcar), b.dataset.d);
     else if (b.dataset.hab) H.abrirHabito(acha(b.dataset.hab));
     else if (b.dataset.novoHab !== undefined) H.abrirHabito();
+    else if (b.dataset.lembretesHab !== undefined) { const n = await H.baixarLembretesDeTodos(); if (!n) toast('Escolha um horário de lembrete nos seus hábitos (toque no nome do hábito) para criar os lembretes.'); }
     else if (b.dataset.mes) { estado.mes = somarMeses(estado.mes, Number(b.dataset.mes)); redesenhar(); }
   });
 }

@@ -263,3 +263,13 @@ Quadro com três colunas: **Quero estudar → Estudando → Concluído**. Sem me
 - **Vira conteúdo:** manda o estudo para a caixinha de ideias do Conteúdo, já com o link da fonte, e você escolhe o pilar.
 - **Curso pago:** informe o valor no curso e use "Lançar gasto no CNPJ": o gasto abre já preenchido com a categoria Educação.
 - "+ Novo → Estudo" também cadastra de qualquer tela.
+
+## Lembretes no iPhone (Mais → Ajustes e backup → Lembretes no iPhone)
+
+O Fluere gera um arquivo de agenda (.ics) com alarmes. No iPhone, ao tocar, aparece a folha de compartilhar com **Calendário** (ou o arquivo baixado abre no Calendário) e você confirma em **Adicionar**. A partir daí o próprio iPhone avisa, **mesmo com o Fluere fechado**. Nada sai do aparelho.
+
+- **Vencimentos:** um evento às 9h na data de cada vencimento, com alarmes na antecedência escolhida (padrão 30 dias), 7 dias antes, na véspera e no dia. O que se repete (todo ano, todo mês…) vira evento repetido. Dá para mandar todos de uma vez (Ajustes ou botão "Lembretes no iPhone" em Vencimentos) ou só um (no formulário do vencimento).
+- **Revisão de domingo:** evento que se repete todo domingo, no horário que você escolher (padrão 18h).
+- **Hábitos:** os que têm horário de lembrete (toque no nome do hábito e defina). Hábitos de "X vezes por semana" avisam em dias bem distribuídos (3x: segunda, quarta e sexta). Há um botão "Lembretes no iPhone" na aba Hábitos.
+- **Mudou algo?** Adicione de novo: cada lembrete tem um código fixo e o Calendário atualiza em vez de duplicar. Para tirar um lembrete, apague o evento no Calendário.
+- **Não vai para o app Lembretes:** o iPhone só importa arquivos desse tipo para o Calendário. Os alarmes do Calendário notificam do mesmo jeito.

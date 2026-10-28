@@ -12,7 +12,9 @@
 
 import * as dados from '../nucleo/dados.js';
 import * as avisos from '../nucleo/avisos.js';
-import { r2, isoDia, isoMes, deIso, somarDias, segundaDaSemana, diasDaSemana } from '../nucleo/util.js';
+import { r2, isoDia, isoMes, deIso, somarDias, segundaDaSemana, diasDaSemana, pref } from '../nucleo/util.js';
+import { abrirFolha, fecharFolha } from '../nucleo/ui.js';
+import * as lembretes from '../nucleo/lembretes.js';
 import * as T from './tarefas.js';
 import * as H from './habitos.js';
 import * as Pe from './pecas.js';
@@ -85,3 +87,30 @@ avisos.registrar('revisao', () => {
   if (dow <= 1 && !daSemana(anterior) && dados.lista('tarefas').length) return [{ id: 'revisao', tipo: 'info', prioridade: 3, irPara: '#/mais/revisao', texto: 'A revisão da semana passada não foi feita. Dá tempo de fazer agora.' }];
   return [];
 });
+
+/* ---------- lembrete de domingo no Calendário do iPhone ---------- */
+
+/** Pergunta o horário e cria o lembrete que se repete todo domingo. */
+export function abrirLembreteDomingo() {
+  const f = abrirFolha(`
+    <h3>Lembrete de domingo</h3>
+    <p class="sub">O Calendário do iPhone avisa todo domingo, no horário que você escolher, para fazer a revisão semanal (uns 10 minutos).</p>
+    <form id="f-dom" novalidate>
+      <div class="fld"><label for="d-hora">Horário</label><input id="d-hora" type="time" value="${pref.ler('horaRevisao', '18:00')}"></div>
+      <div class="acts"><button type="button" class="btn sec" data-fechar>Cancelar</button><button type="submit" class="btn pri">Adicionar ao Calendário</button></div>
+    </form>`);
+  f.querySelector('[data-fechar]').onclick = fecharFolha;
+  f.querySelector('#f-dom').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const hora = f.querySelector('#d-hora').value || '18:00';
+    pref.gravar('horaRevisao', hora);
+    fecharFolha();
+    // primeiro domingo de hoje em diante
+    const hoje = isoDia();
+    const ate = 6 - ((deIso(hoje).getDay() + 6) % 7);
+    await lembretes.entregar(lembretes.calendario([lembretes.evento({
+      uid: 'fluere-revisao@fluere', titulo: 'Revisão semanal do Fluere', descricao: 'Uns 10 minutos para fechar a semana e planejar a próxima.',
+      inicio: `${somarDias(hoje, ate)}T${hora}`, duracao: 30, regra: 'FREQ=WEEKLY;BYDAY=SU', alarmes: ['PT0M'],
+    })]), 'revisao-semanal.ics');
+  };
+}

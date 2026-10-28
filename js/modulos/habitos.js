@@ -14,6 +14,7 @@
 import * as dados from '../nucleo/dados.js';
 import { abrirFolha, fecharFolha, toast, confirmar } from '../nucleo/ui.js';
 import { esc, isoDia, isoMes, diasNoMes } from '../nucleo/util.js';
+import * as lembretes from '../nucleo/lembretes.js';
 
 const COL = 'habitos';
 const COL_M = 'marcacoes';
@@ -216,29 +217,23 @@ function oferecerLembrete(h) {
 }
 
 /** Gera um evento que se repete (com alarme na hora) e entrega para o Calendário. */
+/** Dias da semana do lembrete de um hábito "X vezes por semana" (bem distribuídos). */
+const DIAS_DO_HABITO = { 1: 'MO', 2: 'MO,TH', 3: 'MO,WE,FR', 4: 'MO,TU,TH,FR', 5: 'MO,TU,WE,TH,FR', 6: 'MO,TU,WE,TH,FR,SA' };
+
+/** Evento de calendário do hábito (precisa ter horário de lembrete). */
+export function eventoDoHabito(h) {
+  const regra = h.freq?.tipo === 'semana' && h.freq.vezes < 7 ? `FREQ=WEEKLY;BYDAY=${DIAS_DO_HABITO[Math.max(1, h.freq.vezes)]}` : 'FREQ=DAILY';
+  return lembretes.evento({ uid: `fluere-hab-${h.id}@fluere`, titulo: `✦ ${h.nome}`, inicio: `${isoDia()}T${h.lembrete}`, duracao: 15, regra, alarmes: ['PT0M'] });
+}
+
 export async function baixarLembrete(h) {
-  const [hh, mm] = h.lembrete.split(':');
-  const inicio = isoDia().replace(/-/g, '') + `T${hh}${mm}00`;
-  const regra = h.freq?.tipo === 'semana'
-    ? `FREQ=WEEKLY;BYDAY=${['MO', 'TU', 'WE', 'TH', 'FR', 'SA'].slice(0, Math.max(1, h.freq.vezes)).join(',')}`
-    : 'FREQ=DAILY';
-  const ics = [
-    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Fluere//Habitos//PT', 'BEGIN:VEVENT',
-    `UID:fluere-${h.id}@fluere`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
-    `DTSTART:${inicio}`, 'DURATION:PT15M', `RRULE:${regra}`, `SUMMARY:✦ ${h.nome}`,
-    'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${h.nome}`, 'TRIGGER:PT0M', 'END:VALARM',
-    'END:VEVENT', 'END:VCALENDAR',
-  ].join('\r\n');
-  const arquivo = new File([ics], `lembrete-${h.nome.toLowerCase().replace(/[^a-z0-9]+/gi, '-')}.ics`, { type: 'text/calendar' });
-  try {
-    if (navigator.canShare?.({ files: [arquivo] }) && /iPhone|iPad/.test(navigator.userAgent)) {
-      await navigator.share({ files: [arquivo] });
-      return;
-    }
-  } catch (e) { if (e.name === 'AbortError') return; }
-  const url = URL.createObjectURL(arquivo);
-  const a = Object.assign(document.createElement('a'), { href: url, download: arquivo.name });
-  document.body.append(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-  toast('Abra o arquivo baixado para adicionar ao Calendário.');
+  await lembretes.entregar(lembretes.calendario([eventoDoHabito(h)]), `lembrete-${h.nome.toLowerCase().replace(/[^a-z0-9]+/gi, '-')}.ics`);
+}
+
+/** Um arquivo só com o lembrete de todos os hábitos que têm horário. Devolve quantos entraram. */
+export async function baixarLembretesDeTodos() {
+  const com = lista().filter((h) => h.lembrete);
+  if (!com.length) return 0;
+  await lembretes.entregar(lembretes.calendario(com.map(eventoDoHabito)), 'lembretes-habitos.ics');
+  return com.length;
 }

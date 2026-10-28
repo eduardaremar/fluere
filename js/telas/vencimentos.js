@@ -6,7 +6,7 @@
    ========================================================= */
 
 import * as avisos from '../nucleo/avisos.js';
-import { cabecalho, painel, kpi, icone, areaLimpa } from '../nucleo/ui.js';
+import { cabecalho, painel, kpi, icone, areaLimpa, toast } from '../nucleo/ui.js';
 import { esc, isoDia, diaMes, deIso } from '../nucleo/util.js';
 import * as V from '../modulos/vencimentos.js';
 import * as W from '../modulos/trabalhos.js';
@@ -51,7 +51,8 @@ export function desenhar(el) {
       <div class="kpi"><div class="rot">Novo</div><button type="button" class="btn pri" data-novo style="margin-top:4px">${icone.soma(16)} Vencimento</button></div>
     </div>
 
-    <div class="filtros">${[['todas', 'Todos'], ...V.CATEGORIAS.map((c) => [c.id, c.nome]), ['rt', 'Pousadas (RT)']].map(([id, n]) => `<button type="button" class="chip ${estado.cat === id ? 'acc' : ''}" data-cat="${id}">${n}</button>`).join('')}</div>
+    <div class="filtros" style="justify-content:space-between"><div class="filtros">${[['todas', 'Todos'], ...V.CATEGORIAS.map((c) => [c.id, c.nome]), ['rt', 'Pousadas (RT)']].map(([id, n]) => `<button type="button" class="chip ${estado.cat === id ? 'acc' : ''}" data-cat="${id}">${n}</button>`).join('')}</div>
+      <button type="button" class="btn sec" data-calendario>Lembretes no iPhone</button></div>
 
     ${filtrados.length
       ? grupos.map(([titulo, teste]) => { const l = filtrados.filter(teste); return l.length ? painel({ rot: 'Linha do tempo', titulo, corpo: `<div class="linhas">${l.map(linha).join('')}</div>` }) : ''; }).join('')
@@ -67,6 +68,7 @@ export function desenhar(el) {
     const d = b.dataset;
     if (d.novo !== undefined) V.abrirVencimento();
     else if (d.cat) { estado.cat = d.cat; desenhar(ultimo.el); }
+    else if (d.calendario !== undefined) { const n = await V.enviarParaCalendario(); if (!n) toast('Cadastre um vencimento primeiro.'); }
     else if (d.venc) V.abrirVencimento(V.todos().find((v) => v.id === d.venc));
     else if (d.doc) W.abrirDoc(W.docs().find((x) => x.id === d.doc));
     else if (d.renovei) await V.renovar(V.todos().find((v) => v.id === d.renovei));
