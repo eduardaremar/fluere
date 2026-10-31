@@ -448,32 +448,42 @@ function categoriaDoCusto(nome) {
 export const custosLegados = () => regras(isoMes()).custos;
 export const temCustosLegados = () => Object.values(regrasGuardadas()).some((r) => Array.isArray(r.custos) && r.custos.length);
 
-/** Folha: mostra o que será movido e só move depois do OK. */
+/** Folha: mostra o que será movido, deixa escolher item a item e só move depois do OK. */
 export function abrirUnificacao() {
   const itens = custosLegados().map((c) => ({ ...c, mensal: r2(custoMensal(c)) }));
-  const jaExistem = new Set(S.fixasTodas().map((f) => norm(f.nome)));
-  const mover = itens.filter((c) => !jaExistem.has(norm(c.nome)));
-  const repetidos = itens.filter((c) => jaExistem.has(norm(c.nome)));
+  const existentes = S.fixasTodas();
+  // já existe em Contas fixas? pelo nome, ou por ser uma conta CNPJ com o mesmo valor (pode ter outro nome)
+  const achar = (c) => existentes.find((x) => norm(x.nome) === norm(c.nome) || (x.conta === 'CNPJ' && Math.abs((Number(x.valor) || 0) - c.mensal) < 0.01));
+  const lista = itens.map((c) => ({ ...c, dup: achar(c) }));
   const ano = new Date().getFullYear();
+  const nMover = lista.filter((c) => !c.dup).length;
   const f = abrirFolha(`
     <h3>Unificar custos fixos</h3>
-    <p class="sub">Os custos fixos do consultório vão para <b>Contas fixas</b>, marcados como <b>CNPJ</b>, valendo desde <b>janeiro de ${ano}</b>. Depois disso o campo antigo fica vazio e cada conta conta uma vez só.</p>
-    ${mover.length ? `<div class="rot" style="margin-bottom:6px">Serão movidas (${mover.length})</div>
-      <div class="linhas">${mover.map((c) => `<div class="linha"><span class="tx"><b>${esc(c.nome)}</b><small>${c.tipo === 'anual' ? `anual ${brl(c.valor)} ÷ 12` : 'mensal'} · ${categoriaDoCusto(c.nome)}</small></span><span>${brl(c.mensal)}</span></div>`).join('')}</div>` : '<div class="vazio">Nada para mover.</div>'}
-    ${repetidos.length ? `<div class="alert ok" style="margin-top:10px"><span class="d"></span><div><b>Já existem em Contas fixas</b> e não serão copiadas de novo: ${repetidos.map((c) => esc(c.nome)).join(', ')}. Confira se o valor lá está certo.</div></div>` : ''}
-    <label class="chk" style="margin-top:12px"><input type="checkbox" id="un-ok"> Já fiz o backup (Ajustes → Fazer backup agora)</label>
+    <p class="sub">Cada custo abaixo ou <b>vira uma conta fixa CNPJ</b> (valendo desde janeiro de ${ano}) ou, se já existe em Contas fixas, <b>não é copiado</b>. Depois o campo antigo fica vazio. Assim cada conta conta uma vez só.</p>
+    <div class="linhas">${lista.map((c, i) => `
+      <label class="linha" style="cursor:pointer">
+        <input type="checkbox" data-i="${i}" ${c.dup ? '' : 'checked'} style="width:20px;height:20px;accent-color:var(--acc);flex:none">
+        <span class="tx"><b>${esc(c.nome)}</b>
+          <small>${c.dup
+            ? `já existe em Contas fixas como “${esc(c.dup.nome)}” (${brl(c.dup.valor)}, ${c.dup.conta})${c.dup.conta !== 'CNPJ' ? ' · <b>está como CPF: troque para CNPJ para contar no consultório</b>' : ''}`
+            : `${c.tipo === 'anual' ? `anual ${brl(c.valor)} ÷ 12` : 'mensal'} · ${categoriaDoCusto(c.nome)}`}</small></span>
+        <span>${brl(c.mensal)}</span>
+      </label>`).join('')}</div>
+    <p class="sub" style="margin-top:10px;font-size:12.5px">Marcados serão criados em Contas fixas. Desmarcados não são copiados (e deixam de contar, porque o campo antigo é esvaziado). Se uma conta marcada já existe com outro nome, desmarque-a.</p>
+    <label class="chk" style="margin-top:6px"><input type="checkbox" id="un-ok"> Já fiz o backup (Ajustes → Fazer backup agora)</label>
     <div class="erro" id="un-erro" role="alert"></div>
     <div class="acts"><button type="button" class="btn sec" data-fechar>Agora não</button><button type="button" class="btn pri" data-ok>Unificar</button></div>`);
   f.querySelector('[data-fechar]').onclick = fecharFolha;
   f.querySelector('[data-ok]').onclick = async () => {
     if (!f.querySelector('#un-ok').checked) { f.querySelector('#un-erro').textContent = 'Faça o backup antes e marque a caixinha.'; return; }
-    for (const c of mover) {
+    const marcados = [...f.querySelectorAll('input[data-i]')].filter((x) => x.checked).map((x) => lista[Number(x.dataset.i)]);
+    for (const c of marcados) {
       await dados.salva('fixas', { nome: c.nome, valor: c.mensal, dia: 5, conta: 'CNPJ', cat: categoriaDoCusto(c.nome), ativo: true, desde: `${ano}-01`, ate: '' });
     }
     // esvazia os custos de todas as regras
     const porMes = Object.fromEntries(Object.entries(regrasGuardadas()).map(([k, r]) => [k, { ...r, custos: [] }]));
     await dados.salvaConfig('regrasConsultorio', { porMes });
     fecharFolha();
-    toast(`Pronto ✦ ${mover.length} ${mover.length === 1 ? 'conta movida' : 'contas movidas'} para Contas fixas (CNPJ).`);
+    toast(`Pronto ✦ ${marcados.length} ${marcados.length === 1 ? 'conta movida' : 'contas movidas'} para Contas fixas (CNPJ).`);
   };
 }
