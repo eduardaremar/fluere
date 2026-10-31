@@ -61,11 +61,41 @@ export function entradas(ym) {
   const c = config(), m = doMes(ym);
   const linhas = TRABALHOS.map((t) => {
     const recebidoEm = m[t.id]?.recebidoEm || null;
-    const valor = r2(recebidoEm ? (m[t.id].valor ?? c[t.id].valor) : c[t.id].valor);
+    // o valor combinado vale para todos os meses, a menos que você tenha informado outro para aquele mês
+    const proprio = Number(m[t.id]?.valor);
+    const valor = r2(proprio > 0 ? proprio : c[t.id].valor);
     return { ...t, valor, recebido: !!recebidoEm, recebidoEm, dia: c[t.id].dia };
   });
   const soma = (l) => r2(l.reduce((s, x) => s + x.valor, 0));
   return { linhas, esperado: soma(linhas), recebido: soma(linhas.filter((x) => x.recebido)), aReceber: soma(linhas.filter((x) => !x.recebido)) };
+}
+
+/** Folha para marcar o recebimento do mês: o valor pode ser diferente do combinado (ex.: valor antigo). */
+export function abrirRecebimento(ym, id) {
+  const t = TRABALHOS.find((x) => x.id === id);
+  const e = entradas(ym).linhas.find((l) => l.id === id);
+  const f = abrirFolha(`
+    <h3>${esc(t.nome)} · ${esc(mesPorExtenso(ym))}</h3>
+    <p class="sub">${e.recebido ? 'Já marcado como recebido. Corrija o valor ou desfaça.' : 'Confirme quanto você recebeu neste mês. Se o valor foi diferente do combinado, é só trocar.'}</p>
+    <form id="f-receb" novalidate>
+      <div class="fld valor-grande"><label for="rc-valor">Valor deste mês</label>
+        <input id="rc-valor" inputmode="decimal" value="${numBR(e.valor)}" placeholder="R$ 0,00" autocomplete="off" autofocus>
+        <small>Só vale para ${esc(mesPorExtenso(ym))}. O valor dos outros meses continua o combinado${config()[id].valor ? ` (${brl(config()[id].valor)})` : ''}.</small></div>
+      <label class="chk"><input type="checkbox" id="rc-ok" checked> Já recebi</label>
+      <div class="erro" id="rc-erro" role="alert"></div>
+      <div class="acts"><button type="button" class="btn sec" data-fechar>Cancelar</button><button type="submit" class="btn pri">Salvar</button></div>
+    </form>`);
+  f.querySelector('[data-fechar]').onclick = fecharFolha;
+  f.querySelector('#f-receb').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const v = lerValor(f.querySelector('#rc-valor').value);
+    if (!Number.isFinite(v) || v <= 0) { f.querySelector('#rc-erro').textContent = 'Digite o valor recebido.'; return; }
+    const recebeu = f.querySelector('#rc-ok').checked;
+    const atual = doMes(ym);
+    await dados.salvaConfig(`trabalhos-${ym}`, { ...atual, [id]: { ...atual[id], valor: r2(v), recebidoEm: recebeu ? (atual[id]?.recebidoEm || isoDia()) : null } });
+    fecharFolha();
+    toast(recebeu ? 'Recebimento salvo ✦' : 'Valor do mês salvo.');
+  };
 }
 
 export async function alternarRecebido(ym, id) {

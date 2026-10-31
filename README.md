@@ -171,7 +171,7 @@ Dê dois cliques em **Publicar Fluere.command**.
 - **Importar fatura:** "Importar fatura" lê um arquivo CSV ou OFX do banco **aqui no aparelho** (nada é enviado). Ele sugere conta e categoria, ignora o que já foi lançado e aprende com as suas correções. Para fatura em PDF, peça no app do banco o arquivo CSV ou OFX.
 - **Ajustes:** nomes dos cartões, limite de gastos e meta de sobra (valem todo mês) e as categorias.
 - **Custos fixos do consultório** (contadora, CRN, sistemas) já são descontados no líquido do Módulo 1, por isso não entram de novo aqui.
-- **Resumo geral:** entrou (líquido do consultório) − saiu (gastos e contas fixas) = sobrou, com rosca por categoria, barras dos últimos 6 meses e dicas automáticas.
+- **Resumo geral:** **entrou** = o que você faturou (consultório bruto + trabalhos recebidos) − **saiu** = seus gastos e contas fixas **+ o que o consultório custa no mês** (aluguel, custos fixos, repasse e imposto) = **sobrou**. Dois painéis mostram de onde entrou e para onde saiu, além da rosca por categoria, das barras dos últimos 6 meses e das dicas. O consultório nunca aparece como "entrada negativa": o bruto entra e os custos saem.
 
 ## Pacientes (barra de baixo → Pacientes)
 
@@ -273,3 +273,12 @@ O Fluere gera um arquivo de agenda (.ics) com alarmes. No iPhone, ao tocar, apar
 - **Hábitos:** os que têm horário de lembrete (toque no nome do hábito e defina). Hábitos de "X vezes por semana" avisam em dias bem distribuídos (3x: segunda, quarta e sexta). Há um botão "Lembretes no iPhone" na aba Hábitos.
 - **Mudou algo?** Adicione de novo: cada lembrete tem um código fixo e o Calendário atualiza em vez de duplicar. Para tirar um lembrete, apague o evento no Calendário.
 - **Não vai para o app Lembretes:** o iPhone só importa arquivos desse tipo para o Calendário. Os alarmes do Calendário notificam do mesmo jeito.
+
+- **Trabalhos, valor de cada mês:** o valor combinado vale para todos os meses, mas ao tocar em "marcar recebido" (ou em "recebido ✓") você pode digitar outro valor só para aquele mês, por exemplo o valor antigo de uma pousada. Os outros meses não mudam.
+
+## Tirar um aviso da lista (painel Hoje)
+
+- Cada aviso do card "Central" tem um **×** à direita. Ao tocar, o aviso sai da lista, do contador do sino e das outras telas.
+- Os avisos tirados ficam no cofre, então vale nos dois aparelhos.
+- **Ele só volta se a situação deixar de existir e acontecer de novo.** Exemplo: você tira o aviso "IPVA venceu". Se você renovar o IPVA e, no ano seguinte, ele vencer outra vez, o aviso aparece de novo. Enquanto a situação continua, o aviso fica escondido (mesmo que o número de dias mude).
+- Embaixo do card aparece "Mostrar de novo N avisos dispensados", para trazer todos de volta.

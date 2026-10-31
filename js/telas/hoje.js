@@ -6,7 +6,7 @@
    ========================================================= */
 
 import * as avisos from '../nucleo/avisos.js';
-import { cabecalho, painel, kpi, icone } from '../nucleo/ui.js';
+import { cabecalho, painel, kpi, icone, toast } from '../nucleo/ui.js';
 import { diaPorExtenso, saudacao, esc, isoDia, isoMes, duracao, diaMes } from '../nucleo/util.js';
 import * as T from '../modulos/tarefas.js';
 import * as H from '../modulos/habitos.js';
@@ -18,6 +18,7 @@ const NOME = 'Eduarda';
 
 export function desenhar(el) {
   H.criarIniciais();
+  avisos.limparObsoletos();
   const hoje = isoDia();
   const lista = avisos.todos();
 
@@ -39,9 +40,11 @@ export function desenhar(el) {
     </div>`;
 
   const horaDe = (h) => (h ? h.replace(':', 'h').replace(/h00$/, 'h') : '—');
+  const botaoX = (a) => `<button type="button" class="x-aviso" data-dispensar="${esc(a.id)}" aria-label="Tirar este aviso da lista" title="Tirar da lista">×</button>`;
   const textoAviso = (a) => (a.irPara
-    ? `<li><button type="button" class="alert ${a.tipo || ''}" data-ir="${a.irPara}"><span class="d"></span><div>${a.texto}</div></button></li>`
-    : `<li><div class="alert ${a.tipo || ''}"><span class="d"></span><div>${a.texto}</div></div></li>`);
+    ? `<li><button type="button" class="alert ${a.tipo || ''}" data-ir="${a.irPara}"><span class="d"></span><div>${a.texto}</div></button>${botaoX(a)}</li>`
+    : `<li><div class="alert ${a.tipo || ''}"><span class="d"></span><div>${a.texto}</div></div>${botaoX(a)}</li>`);
+  const nDispensados = avisos.totalDispensados();
   const nH = habitos.length;
 
   el.innerHTML = `
@@ -54,7 +57,8 @@ export function desenhar(el) {
       ${kpi({ rot: 'Atrasadas', valor: atrasadas.length, sub: atrasadas.length ? 'reorganize na semana' : 'nenhuma' })}
     </div>
 
-    ${lista.length ? painel({ rot: 'Central', titulo: lista.length === 1 ? '1 aviso' : `${lista.length} avisos`, corpo: `<ul class="alerts">${lista.map(textoAviso).join('')}</ul>` }) : ''}
+    ${lista.length ? painel({ rot: 'Central', titulo: lista.length === 1 ? '1 aviso' : `${lista.length} avisos`, corpo: `<ul class="alerts com-x">${lista.map(textoAviso).join('')}</ul>${nDispensados ? `<button type="button" class="link-mini" data-restaurar-avisos style="align-self:flex-start">Mostrar de novo ${nDispensados === 1 ? '1 aviso dispensado' : `${nDispensados} avisos dispensados`}</button>` : ''}` })
+      : (nDispensados ? painel({ rot: 'Central', titulo: 'Sem avisos', corpo: `<div class="vazio" style="padding:6px 0">Tudo em dia por aqui.</div><button type="button" class="link-mini" data-restaurar-avisos style="align-self:flex-start">Mostrar de novo ${nDispensados === 1 ? '1 aviso dispensado' : `${nDispensados} avisos dispensados`}</button>` }) : '')}
 
     <div class="grade g-2">
       ${painel({ rot: 'Consultório', titulo: 'Quem você atende', ver: ['#/pacientes', 'Pacientes'],
@@ -98,6 +102,8 @@ export function desenhar(el) {
     else if (b.dataset.editar) T.abrirTarefa(tarefa(b.dataset.editar));
     else if (b.dataset.ficha) P.abrirFicha(b.dataset.ficha);
     else if (b.dataset.consultaFeita) P.abrirConsultaFeita(b.dataset.consultaFeita);
+    else if (b.dataset.dispensar) { await avisos.dispensar(b.dataset.dispensar); toast('Aviso tirado da lista. Ele só volta se a situação deixar de existir e acontecer de novo.'); }
+    else if (b.dataset.restaurarAvisos !== undefined) { await avisos.restaurarTodos(); toast('Avisos de volta.'); }
     else if (b.dataset.peca) Pe.abrirPeca(Pe.todas('propria').find((p) => p.id === b.dataset.peca));
     else if (b.dataset.avancarPeca) await Pe.avancar(Pe.todas('propria').find((p) => p.id === b.dataset.avancarPeca));
     else if (b.dataset.marcar) await H.alternar(H.lista().find((h) => h.id === b.dataset.marcar), hoje);

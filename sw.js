@@ -9,7 +9,7 @@
    ARQUIVOS e aumente o número da VERSAO.
    ========================================================= */
 
-const VERSAO = 'fluere-v19';
+const VERSAO = 'fluere-v20';
 
 const ARQUIVOS = [
   './',

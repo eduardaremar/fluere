@@ -297,37 +297,56 @@ function ligarGastos(el) {
 
 /* =========================================================
    RESUMO GERAL (entrou · saiu · sobrou)
-   Entrou = líquido do consultório + trabalhos paralelos já recebidos (RT e Bela Flor).
-   Saiu   = gastos CPF e CNPJ + contas fixas pessoais. Os custos fixos do
-            consultório já estão descontados no líquido, então não entram de novo.
+   Entrou = faturamento (consultório bruto + trabalhos recebidos).
+   Saiu = gastos CPF e CNPJ + contas fixas pessoais + custos do consultório.
+   Os custos do consultório (aluguel, custos fixos, repasse e imposto) entram em "saiu"; eles já são
+   calculados na aba Consultório e NÃO estão nos gastos (para não contar duas vezes).
    ========================================================= */
 function resumo() {
   const ym = estado.mes;
   const c = C.calcular(ym), s = S.calcular(ym), cfg = S.config();
   const w = W.entradas(ym);
-  const entrou = r2(c.liquido + w.recebido), saiu = s.total, sobrou = r2(entrou - saiu);
+  // Entrou = o que você FATUROU (consultório bruto + trabalhos recebidos).
+  // Saiu = seus gastos + o que o consultório custa no mês (aluguel, custos fixos, repasse e imposto).
+  const custosCons = r2(c.bruto - c.liquido);
+  const entrou = r2(c.bruto + w.recebido), saiu = r2(s.total + custosCons), sobrou = r2(entrou - saiu);
   const meses = Array.from({ length: 6 }, (_, i) => somarMeses(ym, i - 5));
   const barras = meses.map((m) => {
-    const v = r2(C.calcular(m).liquido + W.entradas(m).recebido - S.calcular(m).total);
+    const cm = C.calcular(m);
+    const v = r2(cm.bruto + W.entradas(m).recebido - (S.calcular(m).total + (cm.bruto - cm.liquido)));
     return { rotulo: mesPorExtenso(m).slice(0, 3).toLowerCase(), valor: Math.max(0, v), on: m === ym, dica: brl(v) };
   });
   const cores = s.categorias.map((x, i) => ({ ...x, cor: G.CORES[i % G.CORES.length] }));
   const metaPct = cfg.metaSobra > 0 ? Math.max(0, (sobrou / cfg.metaSobra) * 100) : null;
   const dicas = S.dicas(ym);
+  const linha = (cor, nome, valor, negativo = false) => `<div><i style="background:${cor}"></i><span>${nome}</span><span class="p">${negativo ? '− ' : ''}${typeof valor === 'string' ? valor : brl(valor)}</span></div>`;
+  const total = (nome, valor) => `<div style="border-top:1px solid var(--line);padding-top:9px"><i style="background:transparent"></i><span><b>${nome}</b></span><span class="p"><b>${brl(valor)}</b></span></div>`;
   return `
     <div class="grade g-3">
-      ${kpi({ rot: 'Entrou', valor: curto(entrou), sub: w.recebido ? 'consultório + trabalhos' : 'líquido do consultório' })}
-      ${kpi({ rot: 'Saiu', valor: curto(saiu), sub: 'CPF + CNPJ' })}
+      ${kpi({ rot: 'Entrou', valor: curto(entrou), sub: 'consultório + trabalhos (faturamento)' })}
+      ${kpi({ rot: 'Saiu', valor: curto(saiu), sub: custosCons ? `gastos + ${curto(custosCons)} do consultório` : 'CPF + CNPJ' })}
       ${kpi({ rot: 'Sobrou', valor: curto(sobrou), sub: cfg.metaSobra ? `meta de ${brl(cfg.metaSobra)} · ${sobrou >= cfg.metaSobra ? 'batida ✦' : `faltam ${brl(cfg.metaSobra - sobrou)}`}` : '<button class="link-mini" data-cfg-g>definir meta de sobra</button>', extra: metaPct == null ? '' : G.trilho(metaPct, metaPct >= 100 ? 'var(--g4)' : 'var(--g1)'), classe: 'verde' })}
     </div>
     <div class="grade g-2">
-      ${painel({ rot: 'Para onde foi', titulo: 'Gastos por <em>categoria</em>',
-        corpo: `<div class="rosca-bloco">${G.rosca(cores, { centro: mini(saiu), sub: 'gastos do mês' })}
-          <div class="legenda">${cores.length ? cores.slice(0, 7).map((x) => `<div><i style="background:${x.cor}"></i><span>${esc(x.rotulo)}</span><span class="p">${pct(x.valor, s.total)}%</span></div>`).join('') : '<div class="vazio" style="padding:0;text-align:left">Sem gastos neste mês.</div>'}</div></div>` })}
-      ${painel({ rot: 'Quanto sobrou por mês', titulo: 'Últimos 6 <em>meses</em>', corpo: G.barras(barras, { altura: 150 }) })}
+      ${painel({ rot: 'De onde entrou', titulo: 'Entradas',
+        corpo: `<div class="legenda">
+          ${linha('var(--g1)', 'Consultório (faturamento bruto)', c.bruto)}
+          ${w.linhas.map((l) => linha(l.cor, l.nome, l.recebido ? l.valor : l.valor > 0 ? `a receber ${brl(l.valor)}` : 'valor não informado')).join('')}
+          ${total('Entrou', entrou)}</div>` })}
+      ${painel({ rot: 'Para onde saiu', titulo: 'Saídas',
+        corpo: `<div class="legenda">
+          ${linha('var(--g2)', 'Gastos pessoais e do CNPJ', s.total)}
+          ${c.repasse ? linha('var(--g7)', 'Repasse Campo Largo', c.repasse) : ''}
+          ${c.aluguel ? linha('var(--g3)', 'Aluguel Curitiba', c.aluguel) : ''}
+          ${c.totalCustos ? linha('var(--g5)', 'Custos fixos do consultório', c.totalCustos) : ''}
+          ${c.imposto ? linha('var(--g6)', 'Imposto (DAS)', c.imposto) : ''}
+          ${total('Saiu', saiu)}</div>` })}
     </div>
-    ${painel({ rot: 'De onde entrou', titulo: 'Entradas',
-      corpo: `<div class="legenda"><div><i style="background:var(--g1)"></i><span>Consultório (líquido)</span><span class="p">${brl(c.liquido)}</span></div>
-        ${w.linhas.map((l) => `<div><i style="background:${l.cor}"></i><span>${l.nome}</span><span class="p">${l.recebido ? brl(l.valor) : l.valor > 0 ? `a receber ${brl(l.valor)}` : 'valor não informado'}</span></div>`).join('')}</div>` })}
+    <div class="grade g-2">
+      ${painel({ rot: 'Para onde foi', titulo: 'Gastos por categoria',
+        corpo: `<div class="rosca-bloco">${G.rosca(cores, { centro: mini(s.total), sub: 'gastos do mês' })}
+          <div class="legenda">${cores.length ? cores.slice(0, 7).map((x) => `<div><i style="background:${x.cor}"></i><span>${esc(x.rotulo)}</span><span class="p">${pct(x.valor, s.total)}%</span></div>`).join('') : '<div class="vazio" style="padding:0;text-align:left">Sem gastos neste mês.</div>'}</div></div>` })}
+      ${painel({ rot: 'Quanto sobrou por mês', titulo: 'Últimos 6 meses', corpo: G.barras(barras, { altura: 150 }) })}
+    </div>
     ${dicas.map((t) => `<div class="dica"><span>${t}</span></div>`).join('')}`;
 }

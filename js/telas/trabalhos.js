@@ -229,7 +229,7 @@ function ligar(el) {
     if (!b) return;
     const d = b.dataset;
     if (d.mes) { estado.mes = d.mes === 'hoje' ? isoMes() : somarMeses(estado.mes, Number(d.mes)); redesenhar(); }
-    else if (d.recebi) await W.alternarRecebido(estado.mes, d.recebi);
+    else if (d.recebi) W.abrirRecebimento(estado.mes, d.recebi);
     else if (d.valores !== undefined) W.abrirValores();
     else if (d.novaPousada !== undefined) W.abrirPousada();
     else if (d.editarPousada) W.abrirPousada(W.pousadas().find((p) => p.id === d.editarPousada));
