@@ -60,7 +60,8 @@ export function coletar(segunda, hoje = isoDia()) {
     vendas, vendasTotal: r2(vendas.reduce((s, a) => s + (Number(a.valor) || 0), 0)),
     gastos, gastosTotal: r2(gastos.reduce((s, g) => s + (Number(g.valor) || 0), 0)),
     aReceber: r2(C.pendentes().reduce((s, a) => s + C.aReceberDe(a), 0)),
-    entrouMes: r2(C.calcular(ym).liquido + W.entradas(ym).recebido), saiuMes: r2(S.calcular(ym).total),
+    // faturamento (consultório bruto + trabalhos) e TUDO que saiu (custos do consultório + gastos pessoais)
+    entrouMes: r2(C.calcular(ym).bruto + W.entradas(ym).recebido), saiuMes: r2(C.calcular(ym).bruto - C.calcular(ym).liquido + S.calcular(ym).totalPessoal),
     paraRevisar: S.paraRevisar().length,
     habitos: H.lista().map((h) => ({ h, marcas: dias.map((d) => H.feitoEm(h, d)), feitos: dias.filter((d) => H.feitoEm(h, d)).length, meta: h.freq?.tipo === 'semana' ? h.freq.vezes : 7 })),
     metasAtras,

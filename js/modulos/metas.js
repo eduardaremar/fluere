@@ -65,7 +65,7 @@ const ateAgora = (sem) => sem.meses.filter((m) => m <= isoMes());
 
 export const FONTES = [
   { id: 'faturamento', nome: 'Faturamento do consultório (bruto)', unidade: 'R$', calc: (m, sem) => r2(ateAgora(sem).reduce((s, ym) => s + C.calcular(ym).bruto, 0)) },
-  { id: 'sobra', nome: 'Quanto sobrou (entrou − saiu)', unidade: 'R$', calc: (m, sem) => r2(ateAgora(sem).reduce((s, ym) => s + C.calcular(ym).liquido + W.entradas(ym).recebido - S.calcular(ym).total, 0)) },
+  { id: 'sobra', nome: 'Quanto sobrou (faturamento − tudo que saiu)', unidade: 'R$', calc: (m, sem) => r2(ateAgora(sem).reduce((s, ym) => s + C.calcular(ym).liquido + W.entradas(ym).recebido - S.calcular(ym).totalPessoal, 0)) },
   { id: 'habito', nome: 'Vezes que fiz um hábito', unidade: 'vezes', calc: (m, sem) => { const h = H.lista().find((x) => x.id === m.habitoId); return h ? sem.meses.reduce((s, ym) => s + H.diasFeitos(h, ym).size, 0) : 0; } },
   { id: 'posts', nome: 'Posts no feed (Reels e carrossel)', unidade: 'posts', calc: (m, sem) => Pe.todas('propria').filter((p) => Pe.postada(p) && Pe.formato(p.formato).feed && dentro(sem, p.postadoEm || p.data)).length },
   { id: 'seguidores', nome: 'Seguidores ganhos (das métricas)', unidade: 'seguidores', calc: (m, sem) => Pe.todas('propria').filter((p) => p.metricas && dentro(sem, p.postadoEm || p.data)).reduce((s, p) => s + (Number(p.metricas.seguidores) || 0), 0) },

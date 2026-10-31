@@ -87,7 +87,7 @@ function passo2(d) {
       ${kpi({ rot: 'Vendas da semana', valor: curto(d.vendasTotal), sub: plural(d.vendas.length, 'atendimento', 'atendimentos') })}
       ${kpi({ rot: 'Gastos lançados', valor: curto(d.gastosTotal), sub: plural(d.gastos.length, 'gasto', 'gastos') })}
       ${kpi({ rot: 'A receber', valor: curto(d.aReceber), sub: 'de pacientes, de qualquer mês' })}
-      ${kpi({ rot: 'Sobra do mês', valor: curto(d.entrouMes - d.saiuMes), sub: `entrou ${curto(d.entrouMes)} · saiu ${curto(d.saiuMes)}` })}
+      ${kpi({ rot: 'Sobra do mês', valor: curto(d.entrouMes - d.saiuMes), sub: `faturou ${curto(d.entrouMes)} · saiu ${curto(d.saiuMes)}` })}
     </div>
     ${d.paraRevisar ? `<div class="alert warn"><span class="d"></span><div>${plural(d.paraRevisar, 'gasto', 'gastos')} para decidir se é CPF ou CNPJ. <a href="#/dinheiro/gastos" style="font-weight:600">Revisar agora</a></div></div>` : ''}
     <small style="color:var(--soft)">Os números do mês incluem o líquido do consultório e os trabalhos já recebidos. Para mexer em algo, abra <a href="#/dinheiro" style="font-weight:600">Dinheiro</a>.</small>`;

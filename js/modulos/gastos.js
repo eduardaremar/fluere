@@ -19,14 +19,14 @@
        limite (gasto máximo por mês), metaSobra }
      Valem todo mês, até você mudar.
 
-   Os custos fixos do consultório (contadora, CRN, sistemas) NÃO
-   são lançados aqui: já são descontados no líquido do consultório
-   (módulo Financeiro) e só aparecem aqui como informação.
+   Contas fixas marcadas como CNPJ são os CUSTOS FIXOS DO CONSULTÓRIO:
+   o módulo Financeiro (consultorio.js) as lê daqui e as desconta do
+   ganho líquido do consultório. Elas contam uma vez só: no Resumo geral
+   "Saiu" usa totalPessoal (tudo menos as fixas CNPJ).
    ========================================================= */
 
 import * as dados from '../nucleo/dados.js';
 import * as avisos from '../nucleo/avisos.js';
-import * as C from './consultorio.js';
 import { abrirFolha, fecharFolha, toast, confirmar } from '../nucleo/ui.js';
 import { esc, brl, r2, lerValor, isoDia, isoMes, somarMeses, normal, mesPorExtenso, novoId } from '../nucleo/util.js';
 
@@ -64,6 +64,9 @@ export const desdeDe = (f) => f.desde || `${new Date(f.criadoEm || Date.now()).g
 /** Todas as contas fixas (de qualquer mês), menos as removidas por completo. */
 export const fixasTodas = () => dados.lista(COL_F).filter((f) => f.ativo !== false).sort((a, b) => (a.dia || 0) - (b.dia || 0));
 
+/** As contas fixas do CNPJ de um mês: são os custos fixos do consultório. */
+export const fixasCNPJ = (ym = isoMes()) => fixas(ym).filter((f) => f.conta === 'CNPJ');
+
 /** As contas fixas que valem num mês: já começaram (desde) e ainda não terminaram (ate). */
 export const fixas = (ym = isoMes()) => fixasTodas().filter((f) => desdeDe(f) <= ym && (!f.ate || ym <= f.ate));
 export const doMes = (ym) => todos().filter((g) => g.mes === ym)
@@ -96,7 +99,11 @@ export function calcular(ym) {
     pctLimite: cfg.limite > 0 ? (total / cfg.limite) * 100 : null,
     revisar: L.filter((g) => g.revisar).length,
     futuros: soma(futuros),
-    custosConsultorio: C.calcular(ym).totalCustos,
+    // contas fixas do CNPJ contam como custo do consultório (a aba Consultório as lê daqui)
+    totalFixasCNPJ: soma(F.filter((f) => f.conta === 'CNPJ')),
+    totalFixasCPF: soma(F.filter((f) => f.conta !== 'CNPJ')),
+    // o que vai para "Saiu" no Resumo geral: tudo, menos o que já foi descontado no consultório
+    totalPessoal: r2(total - soma(F.filter((f) => f.conta === 'CNPJ'))),
   };
 }
 
@@ -247,7 +254,8 @@ export function abrirFixa(fixa = null) {
         <div class="fld"><label for="x-dia">Vence no dia</label><input id="x-dia" type="number" min="1" max="31" value="${x.dia || ''}" inputmode="numeric"></div>
       </div>
       <div class="fld"><span class="l">Conta</span>
-        <div class="opcoes" id="x-conta"><button type="button" data-v="CPF" aria-pressed="${x.conta === 'CPF'}">CPF</button><button type="button" data-v="CNPJ" aria-pressed="${x.conta === 'CNPJ'}">CNPJ</button></div></div>
+        <div class="opcoes" id="x-conta"><button type="button" data-v="CPF" aria-pressed="${x.conta === 'CPF'}">CPF</button><button type="button" data-v="CNPJ" aria-pressed="${x.conta === 'CNPJ'}">CNPJ</button></div>
+        <small>CNPJ vira custo do consultório sozinho (desconta do ganho líquido). CPF entra só nos seus gastos.</small></div>
       <div class="fld"><label for="x-cat">Categoria</label><select id="x-cat">${opcoesCat(cfg.categorias[x.conta], x.cat)}</select></div>
       <div class="par">
         <div class="fld"><label for="x-desde">Vale a partir de</label><input id="x-desde" type="month" value="${esc(desde)}"></div>

@@ -296,3 +296,13 @@ O Fluere gera um arquivo de agenda (.ics) com alarmes. No iPhone, ao tocar, apar
 - **Escolha o período** (este ano até agora, 12 meses ou 6 meses), **leia o texto** e toque em **Copiar**. Depois cole numa conversa do Claude: o texto já traz o pedido de análise e de cinco sugestões de mudança.
 - **Privacidade:** o texto só leva números agrupados. **Não vai** nome de paciente, WhatsApp, data de nascimento, anotações nem texto livre (a origem é reduzida a categorias como Instagram e Indicação). O Fluere não envia nada: quem cola é você.
 - Dica: faça isso depois de lançar os meses anteriores, para a análise ter a evolução completa. Meses sem vendas lançadas aparecem zerados.
+
+## Dinheiro reorganizado (Resumo geral primeiro, contas fixas unificadas)
+
+- **Resumo geral é a primeira aba** e a que abre sozinha. O primeiro número é o **Ganho líquido do mês**: consultório depois dos custos (repasse de Campo Largo, aluguel de Curitiba, imposto e contas fixas CNPJ) mais os trabalhos já recebidos (RT e Bela Flor). O faturamento bruto total aparece logo abaixo, em letra menor.
+- **Meta do mês:** a barra do Resumo compara o **ganho líquido** com a meta, valendo para todos os trabalhos juntos. Para ajustar, toque em "ajustar" (é a mesma meta das regras do consultório).
+- **Saiu** = **tudo** que saiu: custos do consultório (repasse, aluguel, imposto, contas fixas CNPJ) + contas fixas pessoais (CPF) + gastos do mês. **Sobrou** = faturamento bruto total − tudo que saiu, ou seja, quanto realmente sobrou no mês. (O ganho líquido já desconta os custos do consultório; por isso "ganho líquido − gastos pessoais" dá o mesmo Sobrou.)
+- **Aba Consultório:** ganho bruto em atendimentos e ganho líquido depois de repasse, aluguel, imposto e contas fixas CNPJ. A meta saiu daqui.
+- **Uma lista só de contas fixas** (Dinheiro → Gastos → Contas fixas): cada uma é **CPF** (pessoal) ou **CNPJ**. As do CNPJ são os custos fixos do consultório: descontam do ganho líquido sozinhas e aparecem em "Contas do mês" (o "pago" é o mesmo nos dois lugares). As de CPF entram só em "Saiu". Cada conta conta uma vez só.
+- **Unificar os custos antigos:** se as regras do consultório ainda tiverem custos fixos, a aba Consultório mostra um aviso com o botão **"Unificar agora"**. Faça o **backup antes**. O Fluere lista as contas, cria cada uma em Contas fixas (CNPJ, valendo desde janeiro), converte a anuidade anual em valor mensal, **pula as que já existem** (como o INSS) e esvazia o campo antigo.
+- O campo "custos fixos" saiu do formulário de regras do consultório. Ficam lá: percentual de Campo Largo, aluguel de Curitiba, imposto, meta, preços e número de consultas por plano.

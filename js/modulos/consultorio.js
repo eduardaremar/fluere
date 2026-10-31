@@ -27,6 +27,7 @@
 
 import * as dados from '../nucleo/dados.js';
 import * as avisos from '../nucleo/avisos.js';
+import * as S from './gastos.js';
 import { abrirFolha, fecharFolha, toast, confirmar } from '../nucleo/ui.js';
 import { esc, brl, r2, lerValor, isoDia, isoMes, mesPorExtenso, somarMeses, normal } from '../nucleo/util.js';
 
@@ -107,7 +108,11 @@ export function calcular(ym) {
   const repasse = r2((brutoCL * R.pctCampoLargo) / 100);
   const aluguel = r2(R.aluguelCuritiba);
   const imposto = r2((bruto * R.pctImposto) / 100);
-  const custos = R.custos.map((c) => ({ ...c, mensal: r2(custoMensal(c)) }));
+  // custos fixos = contas fixas do CNPJ (Gastos) + os que ainda estiverem nas regras (antes da unificação)
+  const custos = [
+    ...R.custos.map((c) => ({ ...c, mensal: r2(custoMensal(c)) })),
+    ...S.fixasCNPJ(ym).map((f) => ({ nome: f.nome, valor: f.valor, tipo: 'mensal', mensal: r2(f.valor), fixaId: f.id })),
+  ];
   const totalCustos = r2(custos.reduce((s, c) => s + c.mensal, 0));
   const liquido = r2(bruto - repasse - aluguel - imposto - totalCustos);
 
@@ -117,8 +122,8 @@ export function calcular(ym) {
     { id: 'repasse', nome: `Repasse Campo Largo (${String(R.pctCampoLargo).replace('.', ',')}%)`, valor: repasse },
     { id: 'aluguel', nome: 'Aluguel Curitiba', valor: aluguel },
     { id: 'imposto', nome: `Imposto / DAS (${String(R.pctImposto).replace('.', ',')}%)`, valor: imposto },
-    ...custos.map((c) => ({ id: `custo:${c.nome}`, nome: c.tipo === 'anual' ? `${c.nome} (1/12 do anual)` : c.nome, valor: c.mensal })),
-  ].filter((c) => c.valor > 0).map((c) => ({ ...c, pago: !!pagos[c.id] }));
+    ...custos.map((c) => ({ id: c.fixaId ? `fixa:${c.fixaId}` : `custo:${c.nome}`, nome: c.tipo === 'anual' ? `${c.nome} (1/12 do anual)` : c.nome, valor: c.mensal, daFixa: !!c.fixaId })),
+  ].filter((c) => c.valor > 0).map((c) => ({ ...c, pago: c.daFixa ? !!S.fixasPagas(ym)[c.id.slice(6)] : !!pagos[c.id] }));
 
   return {
     ym, R, L, bruto, porLocal, porTipo, brutoCL, brutoCWB,
@@ -136,6 +141,7 @@ export function pendentes() {
 }
 
 export async function alternarConta(ym, id) {
+  if (id.startsWith('fixa:')) { await S.alternarFixaPaga(ym, id.slice(5)); return; } // conta fixa do CNPJ: o "pago" é o mesmo de Gastos
   const atual = dados.config(`consultorio-${ym}`)?.pagos ?? {};
   await dados.salvaConfig(`consultorio-${ym}`, { pagos: { ...atual, [id]: !atual[id] } });
 }
@@ -337,12 +343,6 @@ export function abrirAtendimento(atend = null, { data, prefill = {}, aoSalvar } 
    FORMULÁRIO DAS REGRAS
    ========================================================= */
 
-const CUSTOS_SUGERIDOS = [
-  { nome: 'Contadora', valor: '', tipo: 'mensal' },
-  { nome: 'Anuidade do CRN', valor: '', tipo: 'anual' },
-  { nome: 'Sistemas e apps', valor: '', tipo: 'mensal' },
-];
-
 /**
  * Regras do consultório. Valem a partir do mês indicado (padrão: mês atual).
  * `depois`: o que fazer após salvar (ex.: abrir o formulário de atendimento).
@@ -350,18 +350,10 @@ const CUSTOS_SUGERIDOS = [
 export function abrirRegras({ ym = isoMes(), depois } = {}) {
   const primeira = !temRegras();
   const R = regras(ym);
-  const custos = R.custos.length ? R.custos : (primeira ? CUSTOS_SUGERIDOS : []);
   const campo = (id, rotulo, valor, sufixo, ajuda = '') => `
     <div class="fld"><label for="${id}">${rotulo}</label>
       <div class="com-sufixo"><input id="${id}" inputmode="decimal" value="${valor ? numBR(valor).replace(/,00$/, '') : ''}" autocomplete="off"><span>${sufixo}</span></div>
       ${ajuda ? `<small>${ajuda}</small>` : ''}</div>`;
-  const linhaCusto = (c, i) => `
-    <div class="custo" data-i="${i}">
-      <input class="c-nome" value="${esc(c.nome)}" placeholder="Nome" aria-label="Nome do custo">
-      <input class="c-valor" inputmode="decimal" value="${numBR(c.valor)}" placeholder="R$" aria-label="Valor">
-      <select class="c-tipo" aria-label="Frequência"><option value="mensal" ${c.tipo !== 'anual' ? 'selected' : ''}>por mês</option><option value="anual" ${c.tipo === 'anual' ? 'selected' : ''}>por ano</option></select>
-      <button type="button" class="c-tirar" aria-label="Remover">×</button>
-    </div>`;
 
   const f = abrirFolha(`
     <h3>${primeira ? 'Vamos configurar o seu <em>consultório</em>' : 'Regras do <em>consultório</em>'}</h3>
@@ -375,7 +367,7 @@ export function abrirRegras({ ym = isoMes(), depois } = {}) {
       <div class="rot acc">Imposto e meta</div>
       <div class="par">
         ${campo('r-imp', 'Imposto (DAS)', R.pctImposto, '%', 'sobre o valor dos atendimentos')}
-        ${campo('r-meta', 'Meta de faturamento', R.meta, 'R$/mês', 'opcional')}
+        ${campo('r-meta', 'Meta do mês (ganho líquido)', R.meta, 'R$/mês', 'vale para todos os trabalhos juntos; opcional')}
       </div>
       <div class="rot acc">Preços de tabela</div>
       <div class="par par3">
@@ -388,16 +380,16 @@ export function abrirRegras({ ym = isoMes(), depois } = {}) {
         ${campo('r-csem', 'Consultas no de 6 meses', R.consultas.sem, 'consultas')}
       </div>
       <div class="rot acc">Custos fixos do consultório</div>
-      <div id="r-custos">${custos.map(linhaCusto).join('')}</div>
-      <button type="button" class="link-mini" id="r-mais">+ adicionar custo</button>
+      ${R.custos.length
+        ? `<div class="alert warn"><span class="d"></span><div>Você ainda tem <b>${R.custos.length} ${R.custos.length === 1 ? 'custo' : 'custos'}</b> aqui nas regras. Mova para <b>Contas fixas</b> para não contar duas vezes. <button type="button" class="link-mini" id="r-unificar">Unificar agora</button></div></div>`
+        : '<div class="alert ok"><span class="d"></span><div>Os custos fixos (contadora, CRN, sistemas…) agora ficam em <b>Dinheiro → Gastos → Contas fixas</b>. Marque a conta como <b>CNPJ</b> e ela entra sozinha como custo do consultório.</div></div>'}
       <div class="erro" id="r-erro" role="alert"></div>
       <div class="acts" style="margin-top:14px"><button type="button" class="btn sec" data-fechar>${primeira ? 'Depois' : 'Cancelar'}</button><button type="submit" class="btn pri">Salvar</button></div>
     </form>`);
 
   const $ = (s) => f.querySelector(s);
   $('[data-fechar]').onclick = fecharFolha;
-  $('#r-mais').onclick = () => $('#r-custos').insertAdjacentHTML('beforeend', linhaCusto({ nome: '', valor: '', tipo: 'mensal' }, Date.now()));
-  $('#r-custos').addEventListener('click', (e) => { if (e.target.closest('.c-tirar')) e.target.closest('.custo').remove(); });
+  $('#r-unificar')?.addEventListener('click', () => { fecharFolha(); setTimeout(abrirUnificacao, 260); });
 
   $('#f-regras').onsubmit = async (ev) => {
     ev.preventDefault();
@@ -406,11 +398,7 @@ export function abrirRegras({ ym = isoMes(), depois } = {}) {
       pctCampoLargo: num('#r-cl'), aluguelCuritiba: num('#r-cwb'), pctImposto: num('#r-imp'), meta: num('#r-meta'),
       precos: { avulsa: num('#r-avulsa'), tri: num('#r-tri'), sem: num('#r-sem') },
       consultas: { tri: num('#r-ctri') || 3, sem: num('#r-csem') || 4 },
-      custos: [...f.querySelectorAll('.custo')].map((c) => ({
-        nome: c.querySelector('.c-nome').value.trim(),
-        valor: (() => { const v = lerValor(c.querySelector('.c-valor').value); return Number.isFinite(v) ? r2(v) : 0; })(),
-        tipo: c.querySelector('.c-tipo').value,
-      })).filter((c) => c.nome),
+      custos: R.custos, // os custos fixos agora vêm das Contas fixas (CNPJ); estes só existem até a unificação
     };
     if (nova.pctCampoLargo > 100 || nova.pctImposto > 100) { $('#r-erro').textContent = 'Os percentuais precisam ficar entre 0 e 100.'; return; }
     const porMes = { ...regrasGuardadas(), [ym]: nova };
@@ -438,3 +426,54 @@ avisos.registrar('consultorio', () => {
   if (abertas.length) lista.push({ id: 'contas-ant', tipo: 'mid', prioridade: 3, irPara: '#/dinheiro/consultorio', texto: `Contas de ${mesPorExtenso(ant.ym).toLowerCase()} ainda não marcadas como pagas: ${abertas.map((c) => c.nome.replace(/ \(.*\)/, '')).join(', ')}.` });
   return lista;
 });
+
+/* =========================================================
+   UNIFICAR OS CUSTOS FIXOS NAS CONTAS FIXAS
+   Antes: custos fixos nas regras do consultório + contas fixas em Gastos
+   (a mesma conta podia contar duas vezes). Agora: só Contas fixas; as do
+   CNPJ são os custos do consultório.
+   ========================================================= */
+
+const norm = (t) => normal(String(t || '').replace(/\(.*?\)/g, ''));
+
+/** Categoria sugerida (do CNPJ) pelo nome da conta. */
+function categoriaDoCusto(nome) {
+  const n = normal(nome);
+  if (/(canva|capcut|claude|dietitian|live ?clin|app|sistema|software|chatgpt|notion)/.test(n)) return 'Ferramentas';
+  if (/(inss|das|imposto|crn|anuidade|taxa)/.test(n)) return 'Impostos';
+  if (/(contad|operadora|celular|internet|telefone)/.test(n)) return 'Serviços';
+  return 'Outros';
+}
+
+export const custosLegados = () => regras(isoMes()).custos;
+export const temCustosLegados = () => Object.values(regrasGuardadas()).some((r) => Array.isArray(r.custos) && r.custos.length);
+
+/** Folha: mostra o que será movido e só move depois do OK. */
+export function abrirUnificacao() {
+  const itens = custosLegados().map((c) => ({ ...c, mensal: r2(custoMensal(c)) }));
+  const jaExistem = new Set(S.fixasTodas().map((f) => norm(f.nome)));
+  const mover = itens.filter((c) => !jaExistem.has(norm(c.nome)));
+  const repetidos = itens.filter((c) => jaExistem.has(norm(c.nome)));
+  const ano = new Date().getFullYear();
+  const f = abrirFolha(`
+    <h3>Unificar custos fixos</h3>
+    <p class="sub">Os custos fixos do consultório vão para <b>Contas fixas</b>, marcados como <b>CNPJ</b>, valendo desde <b>janeiro de ${ano}</b>. Depois disso o campo antigo fica vazio e cada conta conta uma vez só.</p>
+    ${mover.length ? `<div class="rot" style="margin-bottom:6px">Serão movidas (${mover.length})</div>
+      <div class="linhas">${mover.map((c) => `<div class="linha"><span class="tx"><b>${esc(c.nome)}</b><small>${c.tipo === 'anual' ? `anual ${brl(c.valor)} ÷ 12` : 'mensal'} · ${categoriaDoCusto(c.nome)}</small></span><span>${brl(c.mensal)}</span></div>`).join('')}</div>` : '<div class="vazio">Nada para mover.</div>'}
+    ${repetidos.length ? `<div class="alert ok" style="margin-top:10px"><span class="d"></span><div><b>Já existem em Contas fixas</b> e não serão copiadas de novo: ${repetidos.map((c) => esc(c.nome)).join(', ')}. Confira se o valor lá está certo.</div></div>` : ''}
+    <label class="chk" style="margin-top:12px"><input type="checkbox" id="un-ok"> Já fiz o backup (Ajustes → Fazer backup agora)</label>
+    <div class="erro" id="un-erro" role="alert"></div>
+    <div class="acts"><button type="button" class="btn sec" data-fechar>Agora não</button><button type="button" class="btn pri" data-ok>Unificar</button></div>`);
+  f.querySelector('[data-fechar]').onclick = fecharFolha;
+  f.querySelector('[data-ok]').onclick = async () => {
+    if (!f.querySelector('#un-ok').checked) { f.querySelector('#un-erro').textContent = 'Faça o backup antes e marque a caixinha.'; return; }
+    for (const c of mover) {
+      await dados.salva('fixas', { nome: c.nome, valor: c.mensal, dia: 5, conta: 'CNPJ', cat: categoriaDoCusto(c.nome), ativo: true, desde: `${ano}-01`, ate: '' });
+    }
+    // esvazia os custos de todas as regras
+    const porMes = Object.fromEntries(Object.entries(regrasGuardadas()).map(([k, r]) => [k, { ...r, custos: [] }]));
+    await dados.salvaConfig('regrasConsultorio', { porMes });
+    fecharFolha();
+    toast(`Pronto ✦ ${mover.length} ${mover.length === 1 ? 'conta movida' : 'contas movidas'} para Contas fixas (CNPJ).`);
+  };
+}

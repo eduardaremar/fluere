@@ -49,9 +49,8 @@ export function montarRelatorio(opcao = 'ano', hoje = isoDia()) {
   /* ---------- financeiro ---------- */
   const linhasFin = meses.map((ym) => {
     const c = C.calcular(ym), s = S.calcular(ym), w = W.entradas(ym);
-    const custos = r2(c.bruto - c.liquido);
-    const sobrou = r2(c.bruto + w.recebido - (s.total + custos));
-    return { ym, c, s, w, custos, sobrou, linha: [mesCurto(ym), c.atendimentos, brl(c.bruto), brl(c.repasse), brl(c.aluguel), brl(c.imposto), brl(c.totalCustos), brl(c.liquido), pct(c.liquido, c.bruto), brl(w.recebido), brl(s.total), brl(sobrou)] };
+    const sobrou = r2(c.liquido + w.recebido - s.totalPessoal);
+    return { ym, c, s, w, sobrou, linha: [mesCurto(ym), c.atendimentos, brl(c.bruto), brl(c.repasse), brl(c.aluguel), brl(c.imposto), brl(c.totalCustos), brl(c.liquido), pct(c.liquido, c.bruto), brl(w.recebido), brl(s.totalPessoal), brl(sobrou)] };
   });
   const totalBruto = r2(linhasFin.reduce((s, x) => s + x.c.bruto, 0));
   const totalLiq = r2(linhasFin.reduce((s, x) => s + x.c.liquido, 0));
@@ -106,10 +105,10 @@ export function montarRelatorio(opcao = 'ano', hoje = isoDia()) {
     '- Tudo conta no mês da venda (o plano de 3 meses costuma ser pago inteiro antes da 1ª consulta).',
     '',
     `## Financeiro por mês (${mesCurto(meses[0])} a ${mesCurto(meses.at(-1))})`,
-    tabela(['Mês', 'Atend.', 'Bruto', 'Repasse CL', 'Aluguel', 'Imposto', 'Custos fixos', 'Líquido consult.', 'Margem', 'Trabalhos receb.', 'Gastos pessoais/CNPJ', 'Sobrou'], linhasFin.map((x) => x.linha)),
+    tabela(['Mês', 'Atend.', 'Bruto', 'Repasse CL', 'Aluguel', 'Imposto', 'Custos fixos', 'Líquido consult.', 'Margem', 'Trabalhos receb.', 'Gastos pessoais e outros', 'Sobrou'], linhasFin.map((x) => x.linha)),
     '',
     `Total do período: bruto ${brl(totalBruto)}, líquido do consultório ${brl(totalLiq)} (margem ${pct(totalLiq, totalBruto)}). A receber de pacientes hoje: ${brl(r2(C.pendentes().reduce((s, a) => s + C.aReceberDe(a), 0)))}.`,
-    '"Trabalhos receb." = outros trabalhos (fora do consultório). "Gastos" incluem as contas fixas pessoais e do CNPJ; os custos fixos do consultório estão na coluna própria.',
+    '"Trabalhos receb." = outros trabalhos (fora do consultório). "Custos fixos" = contas fixas do CNPJ, já descontadas no líquido do consultório. "Gastos pessoais e outros" = contas fixas pessoais e gastos do mês, sem os custos do consultório. "Sobrou" = líquido do consultório + trabalhos − gastos pessoais e outros.',
     '',
     '### Vendas do período por local',
     tabela(['Local', 'Qtd.', 'Bruto', 'Ticket médio'], agrupa(noPeriodo, C.LOCAIS.map((l) => l.id), C.nomeLocal, 'local')),

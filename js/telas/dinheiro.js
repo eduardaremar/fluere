@@ -15,9 +15,9 @@ import * as W from '../modulos/trabalhos.js';
 import * as An from '../modulos/analise.js';
 
 const PARTES = [
+  { rota: 'resumo', nome: 'Resumo geral', desenhar: resumo, ligar: (el) => el.addEventListener('click', (e) => { if (e.target.closest('[data-cfg-g]')) S.abrirConfigGastos(); else if (e.target.closest('[data-regras]')) C.abrirRegras({ ym: estado.mes }); else if (e.target.closest('[data-analise]')) An.abrirAnalise(); }) },
   { rota: 'consultorio', nome: 'Consultório', desenhar: consultorio, ligar: ligarConsultorio },
   { rota: 'gastos', nome: 'Gastos', desenhar: gastos, ligar: ligarGastos },
-  { rota: 'resumo', nome: 'Resumo geral', desenhar: resumo, ligar: (el) => el.addEventListener('click', (e) => { if (e.target.closest('[data-cfg-g]')) S.abrirConfigGastos(); else if (e.target.closest('[data-analise]')) An.abrirAnalise(); }) },
 ];
 
 /* O que a tela lembra enquanto você navega */
@@ -99,12 +99,14 @@ function consultorio() {
     leituras.push(`<li class="alert ${v >= 0 ? 'ok' : 'mid'}"><span class="d"></span><div>O bruto ${v >= 0 ? 'subiu' : 'caiu'} <strong>${Math.abs(v)}%</strong> em relação a ${mesPorExtenso(ant.ym).split(' ')[0].toLowerCase()} (${brl(ant.bruto)}).</div></li>`);
   }
 
+  const aviso = C.temCustosLegados() ? `<div class="alert warn"><span class="d"></span><div>Seus <b>custos fixos</b> ainda estão nas regras do consultório. Para não contar duas vezes, mova-os para <b>Contas fixas</b> (CNPJ). <button type="button" class="link-mini" data-unificar>Unificar agora</button></div></div>` : '';
   return `
+    ${aviso}
     <div class="grade g-kpi">
       ${kpi({ rot: 'Ganho bruto', valor: curto(c.bruto), sub: `${c.atendimentos} ${c.atendimentos === 1 ? 'atendimento' : 'atendimentos'}`, classe: 'quente' })}
-      ${kpi({ rot: negativo ? 'Resultado do consultório' : 'Ganho líquido', valor: curto(c.liquido), sub: negativo ? `faltaram ${brl(-c.liquido)} para cobrir os custos` : (c.bruto ? `fica com você ${pct(c.liquido, c.bruto)}%` : 'depois de repasse, aluguel, imposto e custos'), classe: negativo ? 'neg' : 'verde' })}
+      ${kpi({ rot: negativo ? 'Resultado do consultório' : 'Ganho líquido', valor: curto(c.liquido), sub: negativo ? `faltaram ${brl(-c.liquido)} para cobrir os custos` : 'depois de repasse, aluguel, imposto e contas fixas CNPJ', classe: negativo ? 'neg' : 'verde' })}
       ${kpi({ rot: 'A receber', valor: curto(c.aReceber), sub: c.aReceber ? 'deste mês' : 'tudo recebido ✦' })}
-      ${kpi({ rot: 'Meta do mês', valor: c.metaPct == null ? '—' : `${Math.round(c.metaPct)}%`, sub: c.R.meta ? `de ${brl(c.R.meta)}` : '<button class="link-mini" data-regras>definir meta</button>', extra: c.metaPct == null ? '' : G.trilho(c.metaPct, c.metaPct >= 100 ? 'var(--g4)' : 'var(--g1)'), classe: 'rosa' })}
+      ${kpi({ rot: 'Contas fixas CNPJ', valor: c.custos.filter((x) => x.fixaId).length, unidade: 'contas', sub: `${brl(r2(c.custos.filter((x) => x.fixaId).reduce((t, x) => t + x.mensal, 0)))} por mês · vêm de Contas fixas`, classe: 'rosa' })}
     </div>
 
     <div class="grade g-21">
@@ -116,7 +118,7 @@ function consultorio() {
             ${c.repasse ? `<div class="linha"><span class="tx"><small><i class="pt" style="background:var(--g2)"></i>Repasse Campo Largo (${String(c.R.pctCampoLargo).replace('.', ',')}%)</small></span><span class="num menos">− ${brl(c.repasse)}</span></div>` : ''}
             ${c.aluguel ? `<div class="linha"><span class="tx"><small><i class="pt" style="background:var(--g3)"></i>Aluguel Curitiba</small></span><span class="num menos">− ${brl(c.aluguel)}</span></div>` : ''}
             ${c.imposto ? `<div class="linha"><span class="tx"><small><i class="pt" style="background:var(--g6)"></i>Imposto / DAS (${String(c.R.pctImposto).replace('.', ',')}%)</small></span><span class="num menos">− ${brl(c.imposto)}</span></div>` : ''}
-            ${c.totalCustos ? `<div class="linha"><span class="tx"><small><i class="pt" style="background:var(--g5)"></i>Custos fixos (${c.custos.filter((x) => x.mensal).map((x) => esc(x.nome)).join(', ')})</small></span><span class="num menos">− ${brl(c.totalCustos)}</span></div>` : ''}
+            ${c.totalCustos ? `<div class="linha"><span class="tx"><small><i class="pt" style="background:var(--g5)"></i>Contas fixas CNPJ (${c.custos.filter((x) => x.mensal).map((x) => esc(x.nome)).join(', ')})</small></span><span class="num menos">− ${brl(c.totalCustos)}</span></div>` : ''}
             <div class="linha"><span class="tx"><b>${negativo ? 'Resultado do consultório' : 'Ganho líquido'}</b>${negativo ? '<small>os custos passaram do faturamento</small>' : ''}</span><span class="valor ${c.liquido >= 0 ? 'pos-txt' : 'neg-txt'}">${brl(c.liquido)}</span></div>
           </div>` })}
 
@@ -188,7 +190,8 @@ function ligarConsultorio(el) {
   el.addEventListener('click', async (e) => {
     const b = e.target.closest('button');
     if (!b) return;
-    if (b.dataset.regras !== undefined) C.abrirRegras({ ym: estado.mes });
+    if (b.dataset.unificar !== undefined) C.abrirUnificacao();
+    else if (b.dataset.regras !== undefined) C.abrirRegras({ ym: estado.mes });
     else if (b.dataset.novoAt !== undefined) C.abrirAtendimento(null, { data: estado.mes === isoMes() ? undefined : `${estado.mes}-01` });
     else if (b.dataset.editarAt) C.abrirAtendimento(acha(b.dataset.editarAt));
     else if (b.dataset.receber) await C.alternarRecebido(acha(b.dataset.receber));
@@ -232,7 +235,7 @@ function gastos() {
     <div class="grade g-kpi">
       ${kpi({ rot: 'Gasto no mês', valor: curto(s.total), sub: s.limite ? `limite de ${brl(s.limite)}` : '<button class="link-mini" data-cfg-g>definir limite</button>', extra: s.pctLimite == null ? '' : G.trilho(s.pctLimite, s.pctLimite >= 100 ? 'var(--neg-forte)' : s.pctLimite >= 80 ? 'var(--g3)' : 'var(--g4)'), classe: 'quente' })}
       ${kpi({ rot: 'CPF', valor: curto(s.cpf), sub: `${pct(s.cpf, s.total)}% do total`, classe: 'rosa' })}
-      ${kpi({ rot: 'CNPJ', valor: curto(s.cnpj), sub: s.custosConsultorio ? `+ ${brl(s.custosConsultorio)} de custos já no líquido do consultório` : `${pct(s.cnpj, s.total)}% do total` })}
+      ${kpi({ rot: 'CNPJ', valor: curto(s.cnpj), sub: s.totalFixasCNPJ ? `${brl(s.totalFixasCNPJ)} em contas fixas (custo do consultório)` : `${pct(s.cnpj, s.total)}% do total` })}
       ${kpi({ rot: 'Para revisar', valor: s.revisar, unidade: s.revisar === 1 ? 'gasto' : 'gastos', sub: s.revisar ? '<button class="link-mini" data-filtro-g="rev">ver agora</button>' : 'CPF ou CNPJ?' })}
     </div>
 
@@ -246,7 +249,7 @@ function gastos() {
           ${s.F.length ? `<div class="rot">Contas fixas · ${s.fixasPagasN} de ${s.F.length} pagas</div>
             <div class="linhas quebra">${s.F.map((f) => `<div class="linha">
               <button class="caixa-chk ${pagos[f.id] ? 'ok' : ''}" data-fixa-paga="${f.id}" aria-label="Marcar ${esc(f.nome)}">${pagos[f.id] ? icone.check(14) : ''}</button>
-              <button class="tx" data-fixa="${f.id}" style="text-align:left"><b style="${pagos[f.id] ? 'color:var(--soft)' : ''}">${esc(f.nome)}</b><small>vence dia ${f.dia} · ${f.conta}</small></button>
+              <button class="tx" data-fixa="${f.id}" style="text-align:left"><b style="${pagos[f.id] ? 'color:var(--soft)' : ''}">${esc(f.nome)}</b><small>vence dia ${f.dia} · ${f.conta}${f.conta === 'CNPJ' ? ' · custo do consultório' : ''}</small></button>
               <span class="num">${brl(f.valor)}</span></div>`).join('')}</div>` : '<div class="vazio" style="padding:8px 0">Aluguel, luz, internet, academia… cadastre uma vez e elas entram todo mês.</div>'}
           ${s.futuros ? `<div class="dica"><span>Já comprometido nos próximos meses (parcelas): <b>${brl(s.futuros)}</b></span></div>` : ''}
           <div class="acts"><button class="btn contorno" data-nova-fixa>${icone.soma(16)} Conta fixa</button><button class="btn contorno" data-cfg-g>${icone.ajustes(16)} Ajustes</button></div>` })}
@@ -307,47 +310,66 @@ function ligarGastos(el) {
    ========================================================= */
 function resumo() {
   const ym = estado.mes;
-  const c = C.calcular(ym), s = S.calcular(ym), cfg = S.config();
-  const w = W.entradas(ym);
-  // Entrou = o que você FATUROU (consultório bruto + trabalhos recebidos).
-  // Saiu = seus gastos + o que o consultório custa no mês (aluguel, custos fixos, repasse e imposto).
+  const c = C.calcular(ym), s = S.calcular(ym), cfg = S.config(), w = W.entradas(ym);
+  // Ganho líquido = consultório depois dos custos (repasse, aluguel, imposto e contas fixas CNPJ) + trabalhos recebidos.
+  // Saiu = TUDO que saiu: custos do consultório + contas fixas pessoais + gastos do mês.
+  // Sobrou = faturamento bruto total − tudo que saiu (é o mesmo que ganho líquido − gastos pessoais).
+  const ganho = r2(c.liquido + w.recebido);
+  const brutoTotal = r2(c.bruto + w.recebido);
   const custosCons = r2(c.bruto - c.liquido);
-  const entrou = r2(c.bruto + w.recebido), saiu = r2(s.total + custosCons), sobrou = r2(entrou - saiu);
+  const pessoal = s.totalPessoal;
+  const saiu = r2(custosCons + pessoal);
+  const sobrou = r2(brutoTotal - saiu);
+  const meta = c.R.meta;
+  const metaPct = meta > 0 ? (ganho / meta) * 100 : null;
   const meses = Array.from({ length: 6 }, (_, i) => somarMeses(ym, i - 5));
   const barras = meses.map((m) => {
-    const cm = C.calcular(m);
-    const v = r2(cm.bruto + W.entradas(m).recebido - (S.calcular(m).total + (cm.bruto - cm.liquido)));
+    const v = r2(C.calcular(m).liquido + W.entradas(m).recebido - S.calcular(m).totalPessoal); // faturamento − tudo que saiu
     return { rotulo: mesPorExtenso(m).slice(0, 3).toLowerCase(), valor: Math.max(0, v), on: m === ym, dica: brl(v) };
   });
   const cores = s.categorias.map((x, i) => ({ ...x, cor: G.CORES[i % G.CORES.length] }));
-  const metaPct = cfg.metaSobra > 0 ? Math.max(0, (sobrou / cfg.metaSobra) * 100) : null;
+  const sobraPct = cfg.metaSobra > 0 ? Math.max(0, (sobrou / cfg.metaSobra) * 100) : null;
   const dicas = S.dicas(ym);
-  const linha = (cor, nome, valor, negativo = false) => `<div><i style="background:${cor}"></i><span>${nome}</span><span class="p">${negativo ? '− ' : ''}${typeof valor === 'string' ? valor : brl(valor)}</span></div>`;
-  const total = (nome, valor) => `<div style="border-top:1px solid var(--line);padding-top:9px"><i style="background:transparent"></i><span><b>${nome}</b></span><span class="p"><b>${brl(valor)}</b></span></div>`;
+  const linha = (cor, nome, valor) => `<div><i style="background:${cor}"></i><span>${nome}</span><span class="p">${typeof valor === 'string' ? valor : brl(valor)}</span></div>`;
+  const total = (nome, valor, cls = '') => `<div style="border-top:1px solid var(--line);padding-top:9px"><i style="background:transparent"></i><span><b>${nome}</b></span><span class="p ${cls}"><b>${brl(valor)}</b></span></div>`;
+  const partesCustos = [[c.repasse, 'repasse'], [c.aluguel, 'aluguel'], [c.imposto, 'imposto'], [c.totalCustos, 'contas fixas CNPJ']].filter(([v]) => v > 0).map(([v, n]) => `${n} ${curto(v)}`).join(' · ');
   return `
-    <div class="grade g-3">
-      ${kpi({ rot: 'Entrou', valor: curto(entrou), sub: 'consultório + trabalhos (faturamento)' })}
-      ${kpi({ rot: 'Saiu', valor: curto(saiu), sub: custosCons ? `gastos + ${curto(custosCons)} do consultório` : 'CPF + CNPJ' })}
-      ${kpi({ rot: 'Sobrou', valor: curto(sobrou), sub: cfg.metaSobra ? `meta de ${brl(cfg.metaSobra)} · ${sobrou >= cfg.metaSobra ? 'batida ✦' : `faltam ${brl(cfg.metaSobra - sobrou)}`}` : '<button class="link-mini" data-cfg-g>definir meta de sobra</button>', extra: metaPct == null ? '' : G.trilho(metaPct, metaPct >= 100 ? 'var(--g4)' : 'var(--g1)'), classe: 'verde' })}
+    <section class="resumo-hero">
+      <div class="rot">Ganho líquido do mês</div>
+      <div class="num2 ${ganho < 0 ? 'neg-txt' : ''}">${brl(Math.round(ganho)).replace(/,00$/, '')}</div>
+      <small>depois dos custos do consultório · faturamento bruto total ${curto(brutoTotal)}</small>
+      ${metaPct == null ? '<small><button type="button" class="link-mini" data-regras>definir meta do mês</button></small>'
+        : `${G.trilho(metaPct, metaPct >= 100 ? 'var(--g4)' : 'var(--g1)')}<small><b class="${metaPct >= 100 ? 'pos-txt' : ''}">${Math.round(metaPct)}% da meta de ${brl(meta)}</b>${metaPct >= 100 ? ' · meta batida ✦' : ` · faltam ${brl(meta - ganho)}`} <button type="button" class="link-mini" data-regras>ajustar</button></small>`}
+    </section>
+    <div class="duas">
+      ${kpi({ rot: 'Saiu', valor: curto(saiu), sub: `consultório ${curto(custosCons)} + pessoal ${curto(pessoal)}` })}
+      ${kpi({ rot: 'Sobrou', valor: curto(sobrou), sub: `bruto ${curto(brutoTotal)} − saiu ${curto(saiu)}`, extra: sobraPct == null ? '' : G.trilho(sobraPct, sobraPct >= 100 ? 'var(--g4)' : 'var(--g1)'), classe: 'verde' })}
     </div>
     <div class="grade g-2">
-      ${painel({ rot: 'De onde entrou', titulo: 'Entradas',
+      ${painel({ rot: 'De onde veio', titulo: 'Ganho líquido',
         corpo: `<div class="legenda">
-          ${linha('var(--g1)', 'Consultório (faturamento bruto)', c.bruto)}
+          ${linha('var(--g1)', 'Consultório · faturou', c.bruto)}
+          ${custosCons ? `${linha('var(--bg2)', 'Custos do consultório', `− ${brl(custosCons)}`)}<div class="sub-linha">${partesCustos}</div>` : ''}
+          ${total('Resultado do consultório', c.liquido, c.liquido < 0 ? 'neg-txt' : '')}
           ${w.linhas.map((l) => linha(l.cor, l.nome, l.recebido ? l.valor : l.valor > 0 ? `a receber ${brl(l.valor)}` : 'valor não informado')).join('')}
-          ${total('Entrou', entrou)}</div>` })}
+          ${total('Ganho líquido', ganho)}</div>
+          ${c.liquido < 0 ? '<small style="color:var(--soft)">Neste mês os custos do consultório passaram do que ele faturou.</small>' : ''}` })}
       ${painel({ rot: 'Para onde saiu', titulo: 'Saídas',
         corpo: `<div class="legenda">
-          ${linha('var(--g2)', 'Gastos pessoais e do CNPJ', s.total)}
+          <div class="grupo-leg">Consultório</div>
           ${c.repasse ? linha('var(--g7)', 'Repasse Campo Largo', c.repasse) : ''}
           ${c.aluguel ? linha('var(--g3)', 'Aluguel Curitiba', c.aluguel) : ''}
-          ${c.totalCustos ? linha('var(--g5)', 'Custos fixos do consultório', c.totalCustos) : ''}
           ${c.imposto ? linha('var(--g6)', 'Imposto (DAS)', c.imposto) : ''}
-          ${total('Saiu', saiu)}</div>` })}
+          ${c.totalCustos ? linha('var(--g5)', 'Contas fixas CNPJ', c.totalCustos) : ''}
+          <div class="grupo-leg">Pessoal</div>
+          ${linha('var(--g2)', 'Contas fixas pessoais (CPF)', s.totalFixasCPF)}
+          ${linha('var(--g4)', 'Outros gastos do mês', r2(pessoal - s.totalFixasCPF))}
+          ${total('Saiu (tudo)', saiu)}</div>
+          <small style="color:var(--soft)">Os custos do consultório já estão descontados no ganho líquido; aqui aparecem de novo para somar tudo o que saiu. ${cfg.metaSobra ? `Meta de sobra: ${brl(cfg.metaSobra)} (${sobrou >= cfg.metaSobra ? 'batida ✦' : `faltam ${brl(cfg.metaSobra - sobrou)}`}).` : '<button type="button" class="link-mini" data-cfg-g>definir meta de sobra</button>'}</small>` })}
     </div>
     <div class="grade g-2">
       ${painel({ rot: 'Para onde foi', titulo: 'Gastos por categoria',
-        corpo: `<div class="rosca-bloco">${G.rosca(cores, { centro: mini(s.total), sub: 'gastos do mês' })}
+        corpo: `<div class="rosca-bloco">${G.rosca(cores, { centro: mini(s.total), sub: 'CPF + CNPJ' })}
           <div class="legenda">${cores.length ? cores.slice(0, 7).map((x) => `<div><i style="background:${x.cor}"></i><span>${esc(x.rotulo)}</span><span class="p">${pct(x.valor, s.total)}%</span></div>`).join('') : '<div class="vazio" style="padding:0;text-align:left">Sem gastos neste mês.</div>'}</div></div>` })}
       ${painel({ rot: 'Quanto sobrou por mês', titulo: 'Últimos 6 meses', corpo: G.barras(barras, { altura: 150 }) })}
     </div>
