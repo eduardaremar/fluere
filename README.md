@@ -282,3 +282,17 @@ O Fluere gera um arquivo de agenda (.ics) com alarmes. No iPhone, ao tocar, apar
 - Os avisos tirados ficam no cofre, então vale nos dois aparelhos.
 - **Ele só volta se a situação deixar de existir e acontecer de novo.** Exemplo: você tira o aviso "IPVA venceu". Se você renovar o IPVA e, no ano seguinte, ele vencer outra vez, o aviso aparece de novo. Enquanto a situação continua, o aviso fica escondido (mesmo que o número de dias mude).
 - Embaixo do card aparece "Mostrar de novo N avisos dispensados", para trazer todos de volta.
+
+## Contas fixas com período (Dinheiro → Gastos)
+
+- Cada conta fixa tem **"Vale a partir de"** (mês) e **"Até"** (opcional). As contas antigas passam a valer desde **janeiro** do ano em que foram criadas, então os meses de janeiro em diante já mostram as suas contas fixas.
+- **Mudou o valor (ou o dia)?** Ao editar, marque "Mudei o valor…" e escolha a partir de que mês o novo valor vale. A conta antiga termina no mês anterior e nasce uma nova: **os meses passados ficam como estavam**.
+- **"Encerrar conta fixa"** faz a conta deixar de entrar a partir do mês atual; os meses anteriores continuam. (Antes, remover apagava a conta de todos os meses.)
+- O consultório já funciona assim: cada mês usa a regra mais recente até ele. Para mudar aluguel, percentuais ou custos a partir de um mês, abra o mês em Dinheiro → Consultório e use "ajustar regras e custos".
+
+## Levar os dados para o Claude (Dinheiro → Resumo geral, e Pacientes)
+
+- O botão **"Levar para o Claude"** monta um texto com a **evolução do consultório**: financeiro mês a mês (bruto, repasse, aluguel, imposto, custos, líquido, margem, trabalhos, gastos, sobra), vendas por local e por tipo de plano, pacientes novos por mês, consultas feitas, recompra, renovação de pacotes, pacotes parados, inativos, origem, local e faixa etária.
+- **Escolha o período** (este ano até agora, 12 meses ou 6 meses), **leia o texto** e toque em **Copiar**. Depois cole numa conversa do Claude: o texto já traz o pedido de análise e de cinco sugestões de mudança.
+- **Privacidade:** o texto só leva números agrupados. **Não vai** nome de paciente, WhatsApp, data de nascimento, anotações nem texto livre (a origem é reduzida a categorias como Instagram e Indicação). O Fluere não envia nada: quem cola é você.
+- Dica: faça isso depois de lançar os meses anteriores, para a análise ter a evolução completa. Meses sem vendas lançadas aparecem zerados.

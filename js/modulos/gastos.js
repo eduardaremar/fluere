@@ -9,7 +9,10 @@
        data, mes (mês da FATURA, AAAA-MM), meio, revisar,
        grupo, parcela, parcelas }
    Conta fixa (coleção "fixas"):
-     { nome, valor, dia, conta, cat, ativo }  → entra todo mês
+     { nome, valor, dia, conta, cat, ativo, desde: 'AAAA-MM', ate: 'AAAA-MM' (opcional) }
+     → entra todo mês, de "desde" até "ate" (sem "ate": até hoje e nos próximos meses).
+     Quando o valor muda, a conta antiga termina (ate) e nasce uma nova (desde),
+     assim os meses passados não mudam.
      pagamento do mês: config "fixas-AAAA-MM" → { pagos: { id: true } }
    Configuração (config "gastosConfig"):
      { cartoes: [{ id, nome }], categorias: { CPF: [...], CNPJ: [...] },
@@ -55,7 +58,14 @@ const numBR = (v) => (v == null || v === '' || v === 0 ? '' : r2(v).toFixed(2).r
 /* ---------- leitura e cálculos ---------- */
 
 export const todos = () => dados.lista(COL);
-export const fixas = () => dados.lista(COL_F).filter((f) => f.ativo !== false).sort((a, b) => (a.dia || 0) - (b.dia || 0));
+/** Primeiro mês em que a conta fixa vale (as antigas valem desde janeiro do ano em que foram criadas). */
+export const desdeDe = (f) => f.desde || `${new Date(f.criadoEm || Date.now()).getFullYear()}-01`;
+
+/** Todas as contas fixas (de qualquer mês), menos as removidas por completo. */
+export const fixasTodas = () => dados.lista(COL_F).filter((f) => f.ativo !== false).sort((a, b) => (a.dia || 0) - (b.dia || 0));
+
+/** As contas fixas que valem num mês: já começaram (desde) e ainda não terminaram (ate). */
+export const fixas = (ym = isoMes()) => fixasTodas().filter((f) => desdeDe(f) <= ym && (!f.ate || ym <= f.ate));
 export const doMes = (ym) => todos().filter((g) => g.mes === ym)
   .sort((a, b) => (b.data || '').localeCompare(a.data || '') || (b.criadoEm || 0) - (a.criadoEm || 0));
 export const fixasPagas = (ym) => dados.config(`fixas-${ym}`)?.pagos ?? {};
@@ -66,7 +76,7 @@ const soma = (xs) => r2(xs.reduce((s, x) => s + (Number(x.valor) || 0), 0));
 /** Tudo que o mês precisa: totais por conta, por categoria, por meio, limite e parcelados futuros. */
 export function calcular(ym) {
   const L = doMes(ym);
-  const F = fixas();
+  const F = fixas(ym);
   const itens = [...L.map((g) => ({ valor: g.valor, conta: g.conta, cat: g.cat })), ...F.map((f) => ({ valor: f.valor, conta: f.conta, cat: f.cat }))];
   const porCat = {};
   for (const i of itens) porCat[i.cat] = r2((porCat[i.cat] || 0) + i.valor);
@@ -226,9 +236,10 @@ export function abrirFixa(fixa = null) {
   const novo = !fixa;
   const cfg = config();
   const x = fixa ? { ...fixa } : { nome: '', valor: '', dia: 5, conta: 'CPF', cat: 'Casa' };
+  const desde = fixa ? desdeDe(fixa) : `${new Date().getFullYear()}-01`;
   const f = abrirFolha(`
     <h3>${novo ? 'Nova' : 'Editar'} <em>conta fixa</em></h3>
-    <p class="sub">Entra sozinha todo mês. Você só marca quando pagar.</p>
+    <p class="sub">Entra sozinha todo mês, do período que você escolher. Você só marca quando pagar.</p>
     <form id="f-fixa" novalidate>
       <div class="fld"><label for="x-nome">Nome</label><input id="x-nome" value="${esc(x.nome)}" placeholder="Ex.: aluguel, luz, internet, academia" autocomplete="off" autofocus></div>
       <div class="par">
@@ -238,27 +249,49 @@ export function abrirFixa(fixa = null) {
       <div class="fld"><span class="l">Conta</span>
         <div class="opcoes" id="x-conta"><button type="button" data-v="CPF" aria-pressed="${x.conta === 'CPF'}">CPF</button><button type="button" data-v="CNPJ" aria-pressed="${x.conta === 'CNPJ'}">CNPJ</button></div></div>
       <div class="fld"><label for="x-cat">Categoria</label><select id="x-cat">${opcoesCat(cfg.categorias[x.conta], x.cat)}</select></div>
+      <div class="par">
+        <div class="fld"><label for="x-desde">Vale a partir de</label><input id="x-desde" type="month" value="${esc(desde)}"></div>
+        <div class="fld"><label for="x-ate">Até (opcional)</label><input id="x-ate" type="month" value="${esc(x.ate || '')}"></div>
+      </div>
+      ${novo ? '' : `<label class="chk"><input type="checkbox" id="x-split"> Mudei o valor (ou o dia): vale só a partir de um mês, e os meses anteriores ficam como estavam</label>
+        <div class="fld" id="x-corte-box" hidden><label for="x-corte">Novo valor vale a partir de</label><input id="x-corte" type="month" value="${esc(isoMes())}"></div>`}
       <div class="erro" id="x-erro" role="alert"></div>
-      ${novo ? '' : '<div class="opcoes acoes-tarefa"><button type="button" data-acao="remover" class="perigo">Remover conta fixa</button></div>'}
+      ${novo ? '' : '<div class="opcoes acoes-tarefa"><button type="button" data-acao="remover" class="perigo">Encerrar conta fixa</button></div>'}
       <div class="acts"><button type="button" class="btn sec" data-fechar>Cancelar</button><button type="submit" class="btn pri">Salvar</button></div>
     </form>`);
   const $ = (s) => f.querySelector(s);
   const lerConta = escolha(f, '#x-conta', (c) => { $('#x-cat').innerHTML = opcoesCat(cfg.categorias[c], 'Outros'); });
   $('[data-fechar]').onclick = fecharFolha;
+  $('#x-split')?.addEventListener('change', () => { $('#x-corte-box').hidden = !$('#x-split').checked; });
   $('#f-fixa').onsubmit = async (ev) => {
     ev.preventDefault();
     const valor = lerValor($('#x-valor').value), nome = $('#x-nome').value.trim();
     if (!nome) { $('#x-erro').textContent = 'Dê um nome à conta.'; return; }
     if (!Number.isFinite(valor) || valor <= 0) { $('#x-erro').textContent = 'Digite o valor.'; return; }
-    await dados.salva(COL_F, { ...x, nome, valor: r2(valor), dia: Math.min(31, Math.max(1, Number($('#x-dia').value) || 1)), conta: lerConta(), cat: $('#x-cat').value, ativo: true });
+    const de = $('#x-desde').value || desde, ate = $('#x-ate').value || '';
+    if (ate && ate < de) { $('#x-erro').textContent = 'O último mês não pode ser antes do primeiro.'; return; }
+    const campos = { nome, valor: r2(valor), dia: Math.min(31, Math.max(1, Number($('#x-dia').value) || 1)), conta: lerConta(), cat: $('#x-cat').value };
+    if (!novo && $('#x-split')?.checked) {
+      const corte = $('#x-corte').value;
+      if (!corte || corte <= desdeDe(x)) { $('#x-erro').textContent = `Escolha um mês depois de ${desdeDe(x)}, para os meses anteriores ficarem como estavam.`; return; }
+      // a conta antiga termina no mês anterior; nasce uma nova a partir do corte
+      await dados.salva(COL_F, { ...x, ate: somarMeses(corte, -1) });
+      await dados.salva(COL_F, { ...campos, desde: corte, ate, ativo: true });
+      fecharFolha();
+      toast('Valor novo a partir do mês escolhido ✦ Os meses anteriores continuam iguais.');
+      return;
+    }
+    await dados.salva(COL_F, { ...x, ...campos, desde: de, ate, ativo: true });
     fecharFolha();
     toast(novo ? 'Conta fixa criada ✦' : 'Conta fixa salva.');
   };
   $('[data-acao="remover"]')?.addEventListener('click', async () => {
     fecharFolha();
-    if (await confirmar({ titulo: 'Remover conta fixa?', texto: `“${esc(x.nome)}” deixa de entrar nos próximos meses. Os meses passados continuam como estão.`, ok: 'Remover', perigo: true })) {
-      await dados.salva(COL_F, { ...x, ativo: false });
-      toast('Conta fixa removida.');
+    if (await confirmar({ titulo: 'Encerrar conta fixa?', texto: `“${esc(x.nome)}” deixa de entrar a partir deste mês. Os meses anteriores continuam como estão.`, ok: 'Encerrar', perigo: true })) {
+      // se ela só começaria agora ou depois, remove de vez; senão, termina no mês passado
+      if (desdeDe(x) >= isoMes()) await dados.salva(COL_F, { ...x, ativo: false });
+      else await dados.salva(COL_F, { ...x, ate: somarMeses(isoMes(), -1) });
+      toast('Conta fixa encerrada.');
     }
   });
 }
@@ -471,7 +504,7 @@ avisos.registrar('gastos', () => {
   const rev = paraRevisar().length;
   if (rev) lista.push({ id: 'gastos-revisar', tipo: 'mid', prioridade: 3, irPara: '#/dinheiro/gastos', texto: `<strong>${rev}</strong> ${rev === 1 ? 'gasto marcado' : 'gastos marcados'} para revisar (CPF ou CNPJ?).` });
   const pagos = fixasPagas(ym);
-  const vencidas = fixas().filter((f) => !pagos[f.id] && f.dia <= hoje);
+  const vencidas = fixas(ym).filter((f) => !pagos[f.id] && f.dia <= hoje);
   if (vencidas.length) lista.push({ id: 'fixas-vencidas', tipo: 'warn', prioridade: 4, irPara: '#/dinheiro/gastos', texto: `Contas fixas já vencidas e não marcadas como pagas: ${vencidas.map((f) => esc(f.nome)).join(', ')}.` });
   const c = calcular(ym);
   if (c.pctLimite != null && c.pctLimite >= 100) lista.push({ id: 'limite', tipo: 'warn', prioridade: 4, irPara: '#/dinheiro/gastos', texto: `Você passou do limite de gastos do mês em <strong>${brl(c.total - c.limite)}</strong>.` });

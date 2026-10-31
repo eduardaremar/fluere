@@ -12,11 +12,12 @@ import { brl, r2, esc, normal, isoMes, mesPorExtenso, somarMeses, diaPorExtenso,
 import * as C from '../modulos/consultorio.js';
 import * as S from '../modulos/gastos.js';
 import * as W from '../modulos/trabalhos.js';
+import * as An from '../modulos/analise.js';
 
 const PARTES = [
   { rota: 'consultorio', nome: 'Consultório', desenhar: consultorio, ligar: ligarConsultorio },
   { rota: 'gastos', nome: 'Gastos', desenhar: gastos, ligar: ligarGastos },
-  { rota: 'resumo', nome: 'Resumo geral', desenhar: resumo, ligar: (el) => el.addEventListener('click', (e) => { if (e.target.closest('[data-cfg-g]')) S.abrirConfigGastos(); }) },
+  { rota: 'resumo', nome: 'Resumo geral', desenhar: resumo, ligar: (el) => el.addEventListener('click', (e) => { if (e.target.closest('[data-cfg-g]')) S.abrirConfigGastos(); else if (e.target.closest('[data-analise]')) An.abrirAnalise(); }) },
 ];
 
 /* O que a tela lembra enquanto você navega */
@@ -281,7 +282,7 @@ function ligarGastos(el) {
     else if (d.confirmarG) await S.confirmarGasto(acha(d.confirmarG));
     else if (d.filtroG) { estado.filtroG = d.filtroG; redesenhar(); }
     else if (d.novaFixa !== undefined) S.abrirFixa();
-    else if (d.fixa) S.abrirFixa(S.fixas().find((f) => f.id === d.fixa));
+    else if (d.fixa) S.abrirFixa(S.fixasTodas().find((f) => f.id === d.fixa));
     else if (d.fixaPaga) await S.alternarFixaPaga(estado.mes, d.fixaPaga);
     else if (d.cfgG !== undefined) S.abrirConfigGastos();
   });
@@ -348,5 +349,7 @@ function resumo() {
           <div class="legenda">${cores.length ? cores.slice(0, 7).map((x) => `<div><i style="background:${x.cor}"></i><span>${esc(x.rotulo)}</span><span class="p">${pct(x.valor, s.total)}%</span></div>`).join('') : '<div class="vazio" style="padding:0;text-align:left">Sem gastos neste mês.</div>'}</div></div>` })}
       ${painel({ rot: 'Quanto sobrou por mês', titulo: 'Últimos 6 meses', corpo: G.barras(barras, { altura: 150 }) })}
     </div>
-    ${dicas.map((t) => `<div class="dica"><span>${t}</span></div>`).join('')}`;
+    ${dicas.map((t) => `<div class="dica"><span>${t}</span></div>`).join('')}
+    ${painel({ rot: 'Evolução', titulo: 'Analisar com o Claude',
+      corpo: `<p class="sub" style="margin:0">Leva um resumo da evolução do consultório (financeiro e pacientes, sem nomes) para você colar numa conversa com o Claude e pedir análise e sugestões de mudança.</p><button type="button" class="btn pri" data-analise style="align-self:flex-start">Levar para o Claude</button>` })}`;
 }

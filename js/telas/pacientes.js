@@ -11,6 +11,7 @@ import { esc, normal, isoDia } from '../nucleo/util.js';
 import * as avisos from '../nucleo/avisos.js';
 import * as P from '../modulos/pacientes.js';
 import * as C from '../modulos/consultorio.js';
+import * as An from '../modulos/analise.js';
 
 const estado = { busca: '', filtro: 'tudo' };
 const FILTROS = [['tudo', 'Todos'], ['ativos', 'Com pacote'], ['acabando', 'Acabando'], ['sem', 'Sem próxima'], ['curitiba', 'Curitiba'], ['campolargo', 'Campo Largo'], ['online', 'Online'], ['arquivados', 'Arquivados']];
@@ -78,6 +79,7 @@ export function desenhar(el, partes = []) {
           <div class="filtros" style="margin-bottom:12px">
             <input class="busca" type="search" id="busca-pac" placeholder="Buscar paciente" value="${esc(estado.busca)}" autocomplete="off" style="flex:1;min-width:160px;width:auto">
             <button type="button" class="btn pri" data-novo-pac>${icone.soma(16)} Paciente</button>
+            <button type="button" class="btn sec" data-analise>Analisar com o Claude</button>
           </div>
           <div class="filtros" style="margin-bottom:6px">${FILTROS.map(([v, n]) => `<button type="button" class="chip ${estado.filtro === v ? 'acc' : ''}" data-filtro="${v}">${ponto(v)}${n}</button>`).join('')}</div>
           <div id="lista-pac">${listar(hoje)}</div>` })}
@@ -101,6 +103,7 @@ export function desenhar(el, partes = []) {
     if (!b) return;
     if (b.dataset.ficha) P.abrirFicha(b.dataset.ficha);
     else if (b.dataset.novoPac !== undefined) P.abrirPaciente();
+    else if (b.dataset.analise !== undefined) An.abrirAnalise();
     else if (b.dataset.filtro) {
       estado.filtro = b.dataset.filtro;
       el.querySelectorAll('[data-filtro]').forEach((x) => x.classList.toggle('acc', x === b));
