@@ -540,3 +540,6 @@ h1.serif{font:400 clamp(22px,3.8vw,28px)/1.15 var(--serif);letter-spacing:0}
 .alerts.com-x .alert{padding-right:44px}
 .x-aviso{position:absolute;top:50%;right:8px;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:20px;line-height:1;color:var(--soft)}
 .x-aviso:hover{background:color-mix(in srgb,var(--tx) 8%,transparent);color:var(--tx)}
+
+.kpi.neg{background:color-mix(in srgb,var(--neg-bg) 30%,var(--card))}
+.kpi.neg .v b{color:var(--neg)}

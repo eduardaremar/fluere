@@ -73,6 +73,7 @@ function consultorio() {
 
   const c = C.calcular(estado.mes);
   const ant = C.calcular(somarMeses(estado.mes, -1));
+  const negativo = c.liquido < 0; // os custos do mês passaram do que foi faturado
   const descontos = [
     { rotulo: 'Fica com você', valor: Math.max(0, c.liquido), cor: 'var(--g4)' },
     { rotulo: 'Campo Largo', valor: c.repasse, cor: 'var(--g2)' },
@@ -91,7 +92,8 @@ function consultorio() {
   }
   if (c.brutoCL > 0) leituras.push(`<li class="alert"><span class="d"></span><div>Em Campo Largo, <strong>${brl(c.repasse)}</strong> vão para a clínica e <strong>${brl(c.brutoCL - c.repasse)}</strong> ficam com você (antes do imposto).</div></li>`);
   if (c.aReceber > 0) leituras.push(`<li><button class="alert warn" data-filtro="receber"><span class="d"></span><div><strong>${brl(c.aReceber)}</strong> ainda a receber deste mês. Toque para ver.</div></button></li>`);
-  if (c.bruto > 0) leituras.push(`<li class="alert"><span class="d"></span><div>De cada R$ 100 que você fatura, <strong>${brl((c.liquido / c.bruto) * 100)}</strong> ficam com você.</div></li>`);
+  if (negativo) leituras.push(`<li class="alert warn"><span class="d"></span><div>Os custos do consultório neste mês (<strong>${brl(r2(c.bruto - c.liquido))}</strong>) passaram do faturamento (<strong>${brl(c.bruto)}</strong>). Os outros trabalhos (RT e Bela Flor) aparecem no Resumo geral.</div></li>`);
+  else if (c.bruto > 0) leituras.push(`<li class="alert"><span class="d"></span><div>De cada R$ 100 que você fatura, <strong>${brl((c.liquido / c.bruto) * 100)}</strong> ficam com você.</div></li>`);
   if (ant.bruto > 0 && c.bruto > 0) {
     const v = Math.round(((c.bruto - ant.bruto) / ant.bruto) * 100);
     leituras.push(`<li class="alert ${v >= 0 ? 'ok' : 'mid'}"><span class="d"></span><div>O bruto ${v >= 0 ? 'subiu' : 'caiu'} <strong>${Math.abs(v)}%</strong> em relação a ${mesPorExtenso(ant.ym).split(' ')[0].toLowerCase()} (${brl(ant.bruto)}).</div></li>`);
@@ -100,7 +102,7 @@ function consultorio() {
   return `
     <div class="grade g-kpi">
       ${kpi({ rot: 'Ganho bruto', valor: curto(c.bruto), sub: `${c.atendimentos} ${c.atendimentos === 1 ? 'atendimento' : 'atendimentos'}`, classe: 'quente' })}
-      ${kpi({ rot: 'Ganho líquido', valor: curto(c.liquido), sub: c.bruto ? `fica com você ${pct(c.liquido, c.bruto)}%` : 'depois de repasse, aluguel, imposto e custos', classe: 'verde' })}
+      ${kpi({ rot: negativo ? 'Resultado do consultório' : 'Ganho líquido', valor: curto(c.liquido), sub: negativo ? `faltaram ${brl(-c.liquido)} para cobrir os custos` : (c.bruto ? `fica com você ${pct(c.liquido, c.bruto)}%` : 'depois de repasse, aluguel, imposto e custos'), classe: negativo ? 'neg' : 'verde' })}
       ${kpi({ rot: 'A receber', valor: curto(c.aReceber), sub: c.aReceber ? 'deste mês' : 'tudo recebido ✦' })}
       ${kpi({ rot: 'Meta do mês', valor: c.metaPct == null ? '—' : `${Math.round(c.metaPct)}%`, sub: c.R.meta ? `de ${brl(c.R.meta)}` : '<button class="link-mini" data-regras>definir meta</button>', extra: c.metaPct == null ? '' : G.trilho(c.metaPct, c.metaPct >= 100 ? 'var(--g4)' : 'var(--g1)'), classe: 'rosa' })}
     </div>
@@ -115,7 +117,7 @@ function consultorio() {
             ${c.aluguel ? `<div class="linha"><span class="tx"><small><i class="pt" style="background:var(--g3)"></i>Aluguel Curitiba</small></span><span class="num menos">− ${brl(c.aluguel)}</span></div>` : ''}
             ${c.imposto ? `<div class="linha"><span class="tx"><small><i class="pt" style="background:var(--g6)"></i>Imposto / DAS (${String(c.R.pctImposto).replace('.', ',')}%)</small></span><span class="num menos">− ${brl(c.imposto)}</span></div>` : ''}
             ${c.totalCustos ? `<div class="linha"><span class="tx"><small><i class="pt" style="background:var(--g5)"></i>Custos fixos (${c.custos.filter((x) => x.mensal).map((x) => esc(x.nome)).join(', ')})</small></span><span class="num menos">− ${brl(c.totalCustos)}</span></div>` : ''}
-            <div class="linha"><span class="tx"><b>Ganho líquido</b></span><span class="valor ${c.liquido >= 0 ? 'pos-txt' : 'neg-txt'}">${brl(c.liquido)}</span></div>
+            <div class="linha"><span class="tx"><b>${negativo ? 'Resultado do consultório' : 'Ganho líquido'}</b>${negativo ? '<small>os custos passaram do faturamento</small>' : ''}</span><span class="valor ${c.liquido >= 0 ? 'pos-txt' : 'neg-txt'}">${brl(c.liquido)}</span></div>
           </div>` })}
 
       ${painel({ rot: 'Leituras do mês', titulo: 'Alertas',
